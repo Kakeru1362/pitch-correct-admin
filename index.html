@@ -188,6 +188,10 @@
   <div id="toast"></div>
 
 <script>
+  // 既定の保存先（デプロイ済みGAS Web App）。設定タブで上書き可能。
+  const DEFAULT_GAS_URL='https://script.google.com/macros/s/AKfycbwohMQppl_JISCWM3H4LltXxrQOnr2IQWdaEpD5rzIErBSLhEJrAKxaxWzEGl4FaoKz9Q/exec';
+  const gasUrl=()=>localStorage.getItem('gasUrl')||DEFAULT_GAS_URL;
+
   const OPTS = {
     caseStatus:["受付","募集中","確定","実施前","実施済","レポート作成中","納品済","失注"],
     industry:["IT・AI","金融","コンサルティング","メーカー","商社","小売・流通","人材・教育","広告・メディア","不動産・建設","医療・ヘルスケア","公務員・インフラ","その他"],
@@ -216,11 +220,11 @@
   const urlInput=document.getElementById('gasUrl');
   const urlDot=document.getElementById('urlDot'), urlText=document.getElementById('urlText');
   function loadUrl(){
-    const u=localStorage.getItem('gasUrl')||'';
-    urlInput.value=u;
-    if(u){urlDot.classList.add('ok');urlText.textContent='接続先 設定済み';}
-    else{urlDot.classList.remove('ok');urlText.textContent='接続先 未設定 — 「設定」タブでGAS URLを登録してください';}
-    return u;
+    const saved=localStorage.getItem('gasUrl')||'';
+    urlInput.value=saved||DEFAULT_GAS_URL;
+    urlDot.classList.add('ok');
+    urlText.textContent=saved?'接続先 設定済み（カスタム）':'接続先 設定済み（既定の保存先）';
+    return gasUrl();
   }
   document.getElementById('settingsForm').onsubmit=e=>{
     e.preventDefault();
@@ -240,8 +244,7 @@
   document.querySelectorAll('form[data-action]').forEach(form=>{
     form.onsubmit=async e=>{
       e.preventDefault();
-      const url=localStorage.getItem('gasUrl');
-      if(!url){toast('先に「設定」タブでGAS URLを登録してください',true);return;}
+      const url=gasUrl();
       const payload={action:form.dataset.action};
       new FormData(form).forEach((v,k)=>payload[k]=v);
       const btn=form.querySelector('button[type="submit"]');
