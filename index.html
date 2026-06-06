@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pitch Correct 運営入力</title>
+<style>
+  :root{
+    --bg:#0f1320; --panel:#171c2e; --panel2:#1e2540; --line:#2a3354;
+    --txt:#e7ecf6; --sub:#9aa6c4; --accent:#5b8cff; --accent2:#3a6dff;
+    --ok:#2ecc8f; --warn:#ff6b6b; --radius:12px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI","Hiragino Kaku Gothic ProN","Meiryo",sans-serif;
+    background:var(--bg);color:var(--txt);display:flex;min-height:100vh}
+  /* サイドバー */
+  .side{width:230px;background:var(--panel);border-right:1px solid var(--line);
+    padding:22px 14px;flex-shrink:0;position:sticky;top:0;height:100vh}
+  .brand{font-weight:700;font-size:17px;padding:0 8px 18px;letter-spacing:.3px}
+  .brand small{display:block;color:var(--sub);font-weight:400;font-size:12px;margin-top:3px}
+  .nav button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+    background:none;border:none;color:var(--sub);padding:11px 12px;border-radius:9px;
+    font-size:14px;cursor:pointer;margin-bottom:4px;transition:.15s}
+  .nav button:hover{background:var(--panel2);color:var(--txt)}
+  .nav button.active{background:var(--accent2);color:#fff;font-weight:600}
+  .nav .ico{width:18px;text-align:center}
+  .side .hint{position:absolute;bottom:18px;left:14px;right:14px;font-size:11px;color:var(--sub);
+    background:var(--panel2);padding:10px;border-radius:9px;line-height:1.5}
+  /* メイン */
+  .main{flex:1;padding:34px 40px;max-width:880px}
+  h1{font-size:22px;margin:0 0 4px}
+  .lead{color:var(--sub);font-size:13px;margin:0 0 24px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:24px 26px;margin-bottom:22px}
+  .card h2{font-size:15px;margin:0 0 4px;display:flex;align-items:center;gap:8px}
+  .card .desc{color:var(--sub);font-size:12px;margin:0 0 18px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field.full{grid-column:1/-1}
+  label{font-size:12.5px;color:var(--sub)}
+  label .req{color:var(--accent)}
+  input,select,textarea{background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+    padding:10px 12px;border-radius:8px;font-size:14px;font-family:inherit;width:100%}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+  textarea{resize:vertical;min-height:64px}
+  .actions{display:flex;align-items:center;gap:14px;margin-top:20px}
+  .btn{background:var(--accent2);color:#fff;border:none;padding:11px 26px;border-radius:9px;
+    font-size:14px;font-weight:600;cursor:pointer;transition:.15s}
+  .btn:hover{background:var(--accent)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn.ghost{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
+  .page{display:none}
+  .page.active{display:block}
+  /* トースト */
+  #toast{position:fixed;right:24px;bottom:24px;display:flex;flex-direction:column;gap:10px;z-index:99}
+  .toast{background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--ok);
+    padding:13px 18px;border-radius:9px;font-size:13.5px;min-width:240px;box-shadow:0 8px 24px rgba(0,0,0,.4);
+    animation:slide .25s ease}
+  .toast.err{border-left-color:var(--warn)}
+  @keyframes slide{from{transform:translateX(20px);opacity:0}to{transform:none;opacity:1}}
+  .urlbar{font-size:12px;color:var(--sub);margin-bottom:18px;padding:9px 13px;background:var(--panel);
+    border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;gap:8px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--warn)}
+  .dot.ok{background:var(--ok)}
+</style>
+</head>
+<body>
+  <aside class="side">
+    <div class="brand">Pitch Correct<small>運営 入力コンソール</small></div>
+    <nav class="nav">
+      <button data-page="meeting" class="active"><span class="ico">📅</span>会議情報</button>
+      <button data-page="company"><span class="ico">🏢</span>企業情報</button>
+      <button data-page="acct"><span class="ico">💴</span>会計</button>
+      <button data-page="settings"><span class="ico">⚙️</span>設定</button>
+    </nav>
+    <div class="hint">入力した内容は運営マスタのスプレッドシートに自動保存されます。スプシは直接さわらなくてOK。</div>
+  </aside>
+
+  <main class="main">
+    <div class="urlbar"><span class="dot" id="urlDot"></span><span id="urlText">接続先 未設定 — 「設定」タブでGAS URLを登録してください</span></div>
+
+    <!-- 会議情報 -->
+    <section class="page active" id="page-meeting">
+      <h1>会議情報の登録</h1>
+      <p class="lead">説明会モニターの案件を1件追加します（案件IDは自動採番）。</p>
+      <form class="card" data-action="addMeeting">
+        <h2>📅 案件・会議</h2>
+        <p class="desc">「確定日時」は学生報酬の月別集計に使われます。日付で入れてください。</p>
+        <div class="grid">
+          <div class="field"><label>企業名 <span class="req">*</span></label><input name="companyName" required placeholder="例）アルファ商事"></div>
+          <div class="field"><label>ステータス</label><select name="status" data-opts="caseStatus"></select></div>
+          <div class="field full"><label>募集属性条件</label><input name="condition" placeholder="例）MARCH / 経済・経営 / 3年"></div>
+          <div class="field"><label>必要人数</label><input name="headcount" type="number" min="1" placeholder="5"></div>
+          <div class="field"><label>受付日</label><input name="receivedDate" type="date"></div>
+          <div class="field"><label>候補日時（自由記述）</label><input name="candidateDatetime" placeholder="例）6/25 14:00 or 6/26 15:00"></div>
+          <div class="field"><label>確定日時</label><input name="confirmedDatetime" type="datetime-local"></div>
+          <div class="field full"><label>候補者氏名（カンマ区切り）</label><input name="candidateNames" placeholder="山田太郎, 佐藤花子"></div>
+          <div class="field full"><label>確定参加者氏名（カンマ区切り）</label><input name="confirmedNames" placeholder="山田太郎, 佐藤花子"></div>
+          <div class="field"><label>Zoom URL</label><input name="zoomUrl" type="url" placeholder="https://..."></div>
+          <div class="field"><label>Zoom ID / パスコード</label><input name="zoomId" placeholder="123 4567 8901 / pass"></div>
+          <div class="field full"><label>議事録URL</label><input name="minutesUrl" type="url" placeholder="https://..."></div>
+        </div>
+        <div class="actions"><button class="btn" type="submit">案件を登録</button><button class="btn ghost" type="reset">クリア</button></div>
+      </form>
+    </section>
+
+    <!-- 企業情報 -->
+    <section class="page" id="page-company">
+      <h1>企業情報の登録</h1>
+      <p class="lead">営業先・取引先の企業を1社追加します（企業IDは自動採番）。</p>
+      <form class="card" data-action="addCompany">
+        <h2>🏢 企業マスタ</h2>
+        <p class="desc">最低限「企業名」だけでも登録できます。分かる範囲で入力してください。</p>
+        <div class="grid">
+          <div class="field"><label>企業名 <span class="req">*</span></label><input name="companyName" required></div>
+          <div class="field"><label>業界</label><select name="industry" data-opts="industry"></select></div>
+          <div class="field"><label>企業規模</label><input name="size" placeholder="例）従業員50名 / スタートアップ"></div>
+          <div class="field"><label>本社所在地</label><input name="location" placeholder="例）東京都渋谷区"></div>
+          <div class="field"><label>担当者氏名</label><input name="contactName"></div>
+          <div class="field"><label>担当者役職</label><input name="contactTitle"></div>
+          <div class="field"><label>担当者メール</label><input name="contactEmail" type="email"></div>
+          <div class="field"><label>担当者電話</label><input name="contactPhone" type="tel"></div>
+          <div class="field"><label>初回問合せ日</label><input name="firstContactDate" type="date"></div>
+          <div class="field"><label>ステータス</label><input name="status" placeholder="例）商談中 / 受注"></div>
+        </div>
+        <div class="actions"><button class="btn" type="submit">企業を登録</button><button class="btn ghost" type="reset">クリア</button></div>
+      </form>
+    </section>
+
+    <!-- 会計 -->
+    <section class="page" id="page-acct">
+      <h1>会計の登録</h1>
+      <p class="lead">経費・サブスク・ネイル紹介学生をここから登録します（スプシの会計データに保存）。</p>
+
+      <form class="card" data-action="addExpense">
+        <h2>💸 経費（単発の出費）</h2>
+        <p class="desc">交通費・広告費などの1回きりの出費。学生報酬・ネイル報酬・サブスクはここに入れない。</p>
+        <div class="grid">
+          <div class="field"><label>日付 <span class="req">*</span></label><input name="date" type="date" required></div>
+          <div class="field"><label>カテゴリ <span class="req">*</span></label><select name="category" data-opts="expenseCat" required></select></div>
+          <div class="field full"><label>用途・メモ</label><input name="memo" placeholder="例）渋谷往復"></div>
+          <div class="field"><label>金額（円）<span class="req">*</span></label><input name="amount" type="number" min="1" required placeholder="1200"></div>
+        </div>
+        <div class="actions"><button class="btn" type="submit">経費を登録</button></div>
+      </form>
+
+      <form class="card" data-action="addSubscription">
+        <h2>🔁 サブスク経費（毎月自動計上）</h2>
+        <p class="desc">1度登録すれば開始月〜終了月まで毎月自動で計上されます（毎月の入力不要）。</p>
+        <div class="grid">
+          <div class="field"><label>サービス名 <span class="req">*</span></label><input name="name" required placeholder="例）Zoom Pro"></div>
+          <div class="field"><label>月額（円）<span class="req">*</span></label><input name="monthly" type="number" min="1" required placeholder="1500"></div>
+          <div class="field"><label>開始月（1-12）<span class="req">*</span></label><input name="startMonth" type="number" min="1" max="12" required placeholder="6"></div>
+          <div class="field"><label>終了月（空=継続）</label><input name="endMonth" type="number" min="1" max="12" placeholder="空欄でOK"></div>
+          <div class="field full"><label>備考</label><input name="memo"></div>
+        </div>
+        <div class="actions"><button class="btn" type="submit">サブスクを登録</button></div>
+      </form>
+
+      <form class="card" data-action="addNail">
+        <h2>💅 ネイル紹介の学生</h2>
+        <p class="desc">ネイルさん紹介の学生『氏名』を入れるだけ。会議出席ごとに紹介料(×¥1,000)が自動加算されます。</p>
+        <div class="grid">
+          <div class="field full"><label>学生名（フルネーム）<span class="req">*</span></label><input name="name" required placeholder="氏名は学生マスタと一致させる"></div>
+        </div>
+        <div class="actions"><button class="btn" type="submit">学生を登録</button></div>
+      </form>
+    </section>
+
+    <!-- 設定 -->
+    <section class="page" id="page-settings">
+      <h1>設定</h1>
+      <p class="lead">保存先（GAS Web App）のURLを登録します。1度設定すればこの端末に記憶されます。</p>
+      <form class="card" id="settingsForm">
+        <h2>⚙️ 接続先（GAS Web App URL）</h2>
+        <p class="desc">Apps Scriptで「デプロイ→ウェブアプリ」して発行された <code>…/exec</code> のURLを貼り付け。</p>
+        <div class="grid">
+          <div class="field full"><label>GAS Web App URL</label><input id="gasUrl" placeholder="https://script.google.com/macros/s/XXXX/exec"></div>
+        </div>
+        <div class="actions">
+          <button class="btn" type="submit">保存</button>
+          <button class="btn ghost" type="button" id="testBtn">接続テスト</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <div id="toast"></div>
+
+<script>
+  const OPTS = {
+    caseStatus:["受付","募集中","確定","実施前","実施済","レポート作成中","納品済","失注"],
+    industry:["IT・AI","金融","コンサルティング","メーカー","商社","小売・流通","人材・教育","広告・メディア","不動産・建設","医療・ヘルスケア","公務員・インフラ","その他"],
+    expenseCat:["単発費用","学生報酬","ネイル報酬","インターン報酬","広告費","交通費","通信費","備品・消耗品","会議費","外注費","その他"]
+  };
+  // セレクト初期化
+  document.querySelectorAll('select[data-opts]').forEach(sel=>{
+    const list=OPTS[sel.dataset.opts]||[];
+    sel.innerHTML='<option value="">選択してください</option>'+list.map(o=>`<option>${o}</option>`).join('');
+  });
+  // 日付デフォルト=今日
+  const today=new Date().toISOString().slice(0,10);
+  document.querySelectorAll('input[type="date"]').forEach(i=>{if(!i.value)i.value=today;});
+
+  // タブ切替
+  document.querySelectorAll('.nav button').forEach(b=>{
+    b.onclick=()=>{
+      document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      document.getElementById('page-'+b.dataset.page).classList.add('active');
+    };
+  });
+
+  // URL管理
+  const urlInput=document.getElementById('gasUrl');
+  const urlDot=document.getElementById('urlDot'), urlText=document.getElementById('urlText');
+  function loadUrl(){
+    const u=localStorage.getItem('gasUrl')||'';
+    urlInput.value=u;
+    if(u){urlDot.classList.add('ok');urlText.textContent='接続先 設定済み';}
+    else{urlDot.classList.remove('ok');urlText.textContent='接続先 未設定 — 「設定」タブでGAS URLを登録してください';}
+    return u;
+  }
+  document.getElementById('settingsForm').onsubmit=e=>{
+    e.preventDefault();
+    const u=urlInput.value.trim();
+    if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(u)){
+      toast('URLの形式が違います（…/exec で終わるGASのURL）',true);return;
+    }
+    localStorage.setItem('gasUrl',u);loadUrl();toast('接続先を保存しました');
+  };
+  document.getElementById('testBtn').onclick=async()=>{
+    const u=urlInput.value.trim();if(!u){toast('URLを入力してください',true);return;}
+    try{const r=await fetch(u);const j=await r.json();toast(j.ok?('接続OK: '+j.message):'応答エラー',!j.ok);}
+    catch(err){toast('接続失敗: '+err,true);}
+  };
+
+  // フォーム送信
+  document.querySelectorAll('form[data-action]').forEach(form=>{
+    form.onsubmit=async e=>{
+      e.preventDefault();
+      const url=localStorage.getItem('gasUrl');
+      if(!url){toast('先に「設定」タブでGAS URLを登録してください',true);return;}
+      const payload={action:form.dataset.action};
+      new FormData(form).forEach((v,k)=>payload[k]=v);
+      const btn=form.querySelector('button[type="submit"]');
+      btn.disabled=true;const orig=btn.textContent;btn.textContent='送信中…';
+      try{
+        const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+        const j=await res.json();
+        if(j.ok){
+          const id=j.caseId||j.companyId;
+          toast('登録しました'+(id?'（ID: '+id+'）':''));
+          form.reset();
+          form.querySelectorAll('input[type="date"]').forEach(i=>i.value=today);
+        }else{toast('エラー: '+(j.error||'不明'),true);}
+      }catch(err){toast('通信エラー: '+err,true);}
+      finally{btn.disabled=false;btn.textContent=orig;}
+    };
+  });
+
+  // トースト
+  function toast(msg,err){
+    const t=document.createElement('div');t.className='toast'+(err?' err':'');t.textContent=msg;
+    document.getElementById('toast').appendChild(t);
+    setTimeout(()=>{t.style.opacity='0';t.style.transition='.4s';setTimeout(()=>t.remove(),400);},3800);
+  }
+  loadUrl();
+</script>
+</body>
+</html>
