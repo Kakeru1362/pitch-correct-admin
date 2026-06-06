@@ -51,6 +51,26 @@
   .btn.ghost{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
   .page{display:none}
   .page.active{display:block}
+  /* モード切替 */
+  .modebar{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:4px;margin:0 0 20px;gap:4px}
+  .seg{background:none;border:none;color:var(--sub);padding:9px 20px;border-radius:7px;font-size:13.5px;
+    cursor:pointer;font-weight:600}
+  .seg.active{background:var(--accent2);color:#fff}
+  /* ピッカー */
+  .picker{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px}
+  .picker .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .picker .head b{font-size:14px}
+  .recs{width:100%;border-collapse:collapse;font-size:13px}
+  .recs th{text-align:left;color:var(--sub);font-weight:600;padding:7px 10px;border-bottom:1px solid var(--line)}
+  .recs td{padding:9px 10px;border-bottom:1px solid var(--line)}
+  .recs tr{cursor:pointer}
+  .recs tbody tr:hover{background:var(--panel2)}
+  .recs .pill{font-size:11px;padding:2px 9px;border-radius:20px;background:var(--panel2);border:1px solid var(--line)}
+  .recs .empty{color:var(--sub);text-align:center;padding:18px}
+  .editbanner{background:rgba(91,140,255,.12);border:1px solid var(--accent);color:var(--accent);
+    border-radius:8px;padding:8px 14px;font-size:12.5px;margin-bottom:16px}
+  [hidden]{display:none !important}
   /* トースト */
   #toast{position:fixed;right:24px;bottom:24px;display:flex;flex-direction:column;gap:10px;z-index:99}
   .toast{background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--ok);
@@ -80,10 +100,21 @@
     <div class="urlbar"><span class="dot" id="urlDot"></span><span id="urlText">接続先 未設定 — 「設定」タブでGAS URLを登録してください</span></div>
 
     <!-- 会議情報 -->
-    <section class="page active" id="page-meeting">
-      <h1>会議情報の登録</h1>
-      <p class="lead">説明会モニターの案件を1件追加します（案件IDは自動採番）。</p>
-      <form class="card" data-action="addMeeting">
+    <section class="page active editable" id="page-meeting">
+      <h1>会議情報</h1>
+      <p class="lead">案件を新しく追加、または既存の案件を選んで更新します。</p>
+      <div class="modebar">
+        <button class="seg active" data-mode="new">➕ 新規追加</button>
+        <button class="seg" data-mode="edit">✏️ 既存更新</button>
+      </div>
+      <div class="picker" hidden>
+        <div class="head"><b>更新する案件を選ぶ</b><button class="btn ghost refresh" type="button">↻ 一覧を更新</button></div>
+        <table class="recs"><thead><tr><th>日付</th><th>会社名</th><th>参加者</th><th>状態</th></tr></thead><tbody></tbody></table>
+      </div>
+      <form class="card" data-add="addMeeting" data-update="updateMeeting" data-list="listMeetings"
+            data-idfield="caseId" data-addlabel="案件を登録">
+        <div class="editbanner" hidden></div>
+        <input type="hidden" name="__id">
         <h2>📅 案件・会議</h2>
         <p class="desc">「確定日時」は学生報酬の月別集計に使われます。日付で入れてください。</p>
         <div class="grid">
@@ -103,12 +134,24 @@
         <div class="actions"><button class="btn" type="submit">案件を登録</button><button class="btn ghost" type="reset">クリア</button></div>
       </form>
     </section>
+    <!-- /会議情報 -->
 
     <!-- 企業情報 -->
-    <section class="page" id="page-company">
-      <h1>企業情報の登録</h1>
-      <p class="lead">営業先・取引先の企業を1社追加します（企業IDは自動採番）。</p>
-      <form class="card" data-action="addCompany">
+    <section class="page editable" id="page-company">
+      <h1>企業情報</h1>
+      <p class="lead">企業を新しく追加、または既存の企業を選んで更新します。</p>
+      <div class="modebar">
+        <button class="seg active" data-mode="new">➕ 新規追加</button>
+        <button class="seg" data-mode="edit">✏️ 既存更新</button>
+      </div>
+      <div class="picker" hidden>
+        <div class="head"><b>更新する企業を選ぶ</b><button class="btn ghost refresh" type="button">↻ 一覧を更新</button></div>
+        <table class="recs"><thead><tr><th>企業名</th><th>業界</th><th>担当者</th><th>状態</th></tr></thead><tbody></tbody></table>
+      </div>
+      <form class="card" data-add="addCompany" data-update="updateCompany" data-list="listCompanies"
+            data-idfield="companyId" data-addlabel="企業を登録">
+        <div class="editbanner" hidden></div>
+        <input type="hidden" name="__id">
         <h2>🏢 企業マスタ</h2>
         <p class="desc">最低限「企業名」だけでも登録できます。分かる範囲で入力してください。</p>
         <div class="grid">
@@ -240,28 +283,102 @@
     catch(err){toast('接続失敗: '+err,true);}
   };
 
-  // フォーム送信
+  // 共通: GASへPOST
+  async function send(payload,btn){
+    const orig=btn?btn.textContent:'';
+    if(btn){btn.disabled=true;btn.textContent='送信中…';}
+    try{
+      const res=await fetch(gasUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+      return await res.json();
+    }catch(err){return {ok:false,error:String(err)};}
+    finally{if(btn){btn.disabled=false;btn.textContent=orig;}}
+  }
+  const resetDates=form=>form.querySelectorAll('input[type="date"]').forEach(i=>i.value=today);
+
+  // (A) 追記専用フォーム（会計）
   document.querySelectorAll('form[data-action]').forEach(form=>{
     form.onsubmit=async e=>{
       e.preventDefault();
-      const url=gasUrl();
       const payload={action:form.dataset.action};
       new FormData(form).forEach((v,k)=>payload[k]=v);
-      const btn=form.querySelector('button[type="submit"]');
-      btn.disabled=true;const orig=btn.textContent;btn.textContent='送信中…';
-      try{
-        const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
-        const j=await res.json();
-        if(j.ok){
-          const id=j.caseId||j.companyId;
-          toast('登録しました'+(id?'（ID: '+id+'）':''));
-          form.reset();
-          form.querySelectorAll('input[type="date"]').forEach(i=>i.value=today);
-        }else{toast('エラー: '+(j.error||'不明'),true);}
-      }catch(err){toast('通信エラー: '+err,true);}
-      finally{btn.disabled=false;btn.textContent=orig;}
+      const j=await send(payload,form.querySelector('button[type="submit"]'));
+      if(j.ok){toast('登録しました');form.reset();resetDates(form);}
+      else toast('エラー: '+(j.error||'不明'),true);
     };
   });
+
+  // (B) 編集対応フォーム（会議・企業）: 新規追加 / 既存更新
+  const PICKER_COLS={
+    caseId:it=>[it.confirmedDatetime||it.candidateDatetime||'(日付未定)',it.companyName||'-',it.confirmedNames||it.candidateNames||'-',it.status||''],
+    companyId:it=>[it.companyName||'-',it.industry||'-',it.contactName||'-',it.status||'']
+  };
+  document.querySelectorAll('.editable').forEach(page=>{
+    const form=page.querySelector('form');
+    const picker=page.querySelector('.picker');
+    const banner=page.querySelector('.editbanner');
+    const tbody=page.querySelector('.recs tbody');
+    const submitBtn=form.querySelector('button[type="submit"]');
+    const idField=form.dataset.idfield;
+
+    function setMode(mode){
+      form.dataset.mode=mode;
+      page.querySelectorAll('.seg').forEach(s=>s.classList.toggle('active',s.dataset.mode===mode));
+      if(mode==='new'){
+        picker.hidden=true; form.hidden=false; banner.hidden=true;
+        form.reset(); resetDates(form); form.querySelector('[name=__id]').value='';
+        submitBtn.textContent=form.dataset.addlabel;
+      }else{
+        picker.hidden=false; form.hidden=true;   // 案件を選ぶまでフォームは隠す
+        loadList();
+      }
+    }
+    async function loadList(){
+      tbody.innerHTML='<tr><td class="empty" colspan="4">読み込み中…</td></tr>';
+      const j=await send({action:form.dataset.list});
+      if(!j.ok){tbody.innerHTML='<tr><td class="empty" colspan="4">取得失敗: '+(j.error||'')+'</td></tr>';return;}
+      const items=j.items||[];
+      if(!items.length){tbody.innerHTML='<tr><td class="empty" colspan="4">まだ登録がありません</td></tr>';return;}
+      tbody.innerHTML='';
+      items.forEach(it=>{
+        const tr=document.createElement('tr');
+        const c=PICKER_COLS[idField](it);
+        tr.innerHTML=`<td>${esc(c[0])}</td><td>${esc(c[1])}</td><td>${esc(c[2])}</td><td><span class="pill">${esc(c[3])}</span></td>`;
+        tr.onclick=()=>pick(it);
+        tbody.appendChild(tr);
+      });
+    }
+    function pick(it){
+      form.querySelectorAll('[name]').forEach(el=>{
+        if(el.name==='__id')return;
+        if(it[el.name]!==undefined)el.value=it[el.name];
+      });
+      form.querySelector('[name=__id]').value=it[idField];
+      banner.hidden=false; banner.textContent='編集中: '+it[idField]+(it.companyName?'（'+it.companyName+'）':'');
+      form.hidden=false;
+      submitBtn.textContent='更新を保存';
+      form.scrollIntoView({behavior:'smooth',block:'start'});
+    }
+
+    page.querySelectorAll('.seg').forEach(s=>s.onclick=()=>setMode(s.dataset.mode));
+    page.querySelector('.refresh').onclick=loadList;
+
+    form.onsubmit=async e=>{
+      e.preventDefault();
+      const isEdit=form.dataset.mode==='edit';
+      const payload={action:isEdit?form.dataset.update:form.dataset.add};
+      new FormData(form).forEach((v,k)=>{if(k!=='__id')payload[k]=v;});
+      if(isEdit)payload[idField]=form.querySelector('[name=__id]').value;
+      const j=await send(payload,submitBtn);
+      if(j.ok){
+        const id=j[idField];
+        toast((isEdit?'更新しました':'登録しました')+(id?'（ID: '+id+'）':''));
+        if(isEdit){loadList();form.hidden=true;banner.hidden=true;}
+        else{form.reset();resetDates(form);}
+      }else toast('エラー: '+(j.error||'不明'),true);
+    };
+    setMode('new');
+  });
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
   // トースト
   function toast(msg,err){
