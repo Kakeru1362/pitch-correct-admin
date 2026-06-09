@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pitch Correct 運営入力</title>
+<title>RHC（Recruit Health Consulting） 運営入力</title>
 <style>
   :root{
     --bg:#f6f7f9; --surface:#ffffff; --surface-2:#fbfbfc; --field:#ffffff;
@@ -96,14 +96,43 @@
   .dot{width:7px;height:7px;border-radius:50%;background:var(--warn);flex-shrink:0}
   .dot.ok{background:var(--ok)}
   @media(max-width:720px){.side{width:64px;padding:18px 8px}.brand,.nav button span:not(.ico),.side .hint{display:none}.main{padding:28px 20px}}
+  /* 進行管理: フェーズステッパー */
+  .stepper{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+  .step{flex:1;min-width:120px;background:var(--bg);border:1px solid var(--line-2);border-radius:var(--radius-sm);
+    padding:9px 10px;cursor:pointer;text-align:center;transition:.12s;position:relative}
+  .step:hover{border-color:var(--accent);color:var(--accent)}
+  .step .n{display:block;font-size:11px;color:var(--muted);font-weight:600}
+  .step .nm{font-size:12.5px;font-weight:600}
+  .step.done{background:#eafaf1;border-color:#bfe9d2;color:var(--ok)}
+  .step.current{background:var(--accent);border-color:var(--accent);color:#fff}
+  .step.current .n{color:#dfe2ff}
+  /* 進行管理: To Doカード */
+  .todocard{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);
+    border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;box-shadow:var(--shadow)}
+  .todocard.done{border-left-color:var(--ok);opacity:.78}
+  .todocard h3{margin:0 0 4px;font-size:14.5px;font-weight:650;display:flex;align-items:center;gap:8px}
+  .todocard .tdesc{color:var(--sub);font-size:12.5px;margin:0 0 12px;line-height:1.6}
+  .todocard .links{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .todocard .reflink{font-size:12px;padding:6px 12px;border-radius:20px;background:var(--accent-soft);
+    color:var(--accent);text-decoration:none;border:1px solid #d7daf9}
+  .todocard .reflink:hover{background:#e3e6fd}
+  .todocard .memo{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+  .todocard .memo input{flex:1}
+  .todocard .donebadge{font-size:11px;color:var(--ok);font-weight:700}
+  .todocard .doneat{font-size:11px;color:var(--muted);margin-left:6px}
+  .phasehdr{font-size:13px;font-weight:700;color:var(--sub);margin:6px 2px 12px;letter-spacing:.02em}
+  .recs td .miniact{font-size:11.5px;padding:5px 11px;border-radius:20px;background:var(--accent);color:#fff;
+    border:none;cursor:pointer;font-weight:600;white-space:nowrap}
+  .recs td .miniact:hover{background:var(--accent-press)}
 </style>
 </head>
 <body>
   <aside class="side">
-    <div class="brand">Pitch Correct<small>運営 入力コンソール</small></div>
+    <div class="brand">RHC（Recruit Health Consulting）<small>運営 入力コンソール</small></div>
     <nav class="nav">
-      <button data-page="meeting" class="active"><span class="ico">📅</span>会議情報</button>
-      <button data-page="company"><span class="ico">🏢</span>企業情報</button>
+      <button data-page="meeting" class="active"><span class="ico">📅</span>説明会会議管理</button>
+      <button data-page="deal"><span class="ico">🤝</span>商談リスト</button>
+      <button data-page="progress"><span class="ico">🚩</span>企業進行管理</button>
       <button data-page="acct"><span class="ico">💴</span>会計</button>
       <button data-page="settings"><span class="ico">⚙️</span>設定</button>
     </nav>
@@ -115,7 +144,7 @@
 
     <!-- 会議情報 -->
     <section class="page active editable" id="page-meeting">
-      <h1>会議情報</h1>
+      <h1>説明会会議管理</h1>
       <p class="lead">案件を新しく追加、または既存の案件を選んで更新します。</p>
       <div class="modebar">
         <button class="seg active" data-mode="new">➕ 新規追加</button>
@@ -150,23 +179,25 @@
     </section>
     <!-- /会議情報 -->
 
-    <!-- 企業情報 -->
-    <section class="page editable" id="page-company">
-      <h1>企業情報</h1>
-      <p class="lead">企業を新しく追加、または既存の企業を選んで更新します。</p>
+    <!-- 商談リスト -->
+    <section class="page editable" id="page-deal">
+      <h1>商談リスト</h1>
+      <p class="lead">商談中の企業を登録・管理します。「やります」となったら一覧の「初回面談へ進める」で企業進行管理へ移動します。</p>
       <div class="modebar">
         <button class="seg active" data-mode="new">➕ 新規追加</button>
-        <button class="seg" data-mode="edit">✏️ 既存更新</button>
+        <button class="seg" data-mode="edit">✏️ 一覧・既存更新</button>
       </div>
       <div class="picker" hidden>
-        <div class="head"><b>更新する企業を選ぶ</b><button class="btn ghost refresh" type="button">↻ 一覧を更新</button></div>
-        <table class="recs"><thead><tr><th>企業名</th><th>業界</th><th>担当者</th><th>状態</th></tr></thead><tbody></tbody></table>
+        <div class="head"><b>商談中の企業</b><button class="btn ghost refresh" type="button">↻ 一覧を更新</button></div>
+        <table class="recs"><thead><tr><th>企業名</th><th>業界</th><th>担当者</th><th>状態</th><th></th></tr></thead><tbody></tbody></table>
       </div>
-      <form class="card" data-add="addCompany" data-update="updateCompany" data-list="listCompanies"
-            data-idfield="companyId" data-addlabel="企業を登録">
+      <form class="card" data-add="addDeal" data-update="updateDeal" data-list="listDeals"
+            data-idfield="companyId" data-addlabel="商談企業を登録"
+            data-rowaction="promoteToManagement" data-rowactionlabel="初回面談へ進める"
+            data-rowconfirm="この企業を「初回面談」フェーズで進行管理に移します。Driveに会社フォルダを自動作成します。よろしいですか？">
         <div class="editbanner" hidden></div>
         <input type="hidden" name="__id">
-        <h2>🏢 企業マスタ</h2>
+        <h2>🤝 商談企業</h2>
         <p class="desc">最低限「企業名」だけでも登録できます。分かる範囲で入力してください。</p>
         <div class="grid">
           <div class="field"><label>企業名 <span class="req">*</span></label><input name="companyName" required></div>
@@ -178,10 +209,40 @@
           <div class="field"><label>担当者メール</label><input name="contactEmail" type="email"></div>
           <div class="field"><label>担当者電話</label><input name="contactPhone" type="tel"></div>
           <div class="field"><label>初回問合せ日</label><input name="firstContactDate" type="date"></div>
-          <div class="field"><label>ステータス</label><input name="status" placeholder="例）商談中 / 受注"></div>
+          <div class="field"><label>商談メモ・ステータス</label><input name="status" placeholder="例）商談中 / 検討中"></div>
         </div>
-        <div class="actions"><button class="btn" type="submit">企業を登録</button><button class="btn ghost" type="reset">クリア</button></div>
+        <div class="actions"><button class="btn" type="submit">商談企業を登録</button><button class="btn ghost" type="reset">クリア</button></div>
       </form>
+    </section>
+
+    <!-- 企業進行管理 -->
+    <section class="page" id="page-progress">
+      <h1>企業進行管理</h1>
+      <p class="lead">企業を選ぶと現在のフェーズと「いまやるべき To Do」を表示します。To Doを完了すると自動で次のフェーズへ進みます。</p>
+      <div class="picker" id="progPicker">
+        <div class="head">
+          <b>進行中の企業を選ぶ</b>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="progSearch" placeholder="企業名・業界・担当者で絞り込み" style="width:220px;padding:7px 10px">
+            <button class="btn ghost" type="button" id="progRefresh">↻ 一覧を更新</button>
+          </div>
+        </div>
+        <table class="recs"><thead><tr><th>企業名</th><th>業界</th><th>担当者</th><th>現フェーズ</th></tr></thead><tbody id="progList"></tbody></table>
+      </div>
+
+      <div id="progDetail" hidden>
+        <div class="card" style="padding:20px 24px">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+            <h2 id="progCompany" style="margin:0;font-size:17px"></h2>
+            <div style="display:flex;gap:10px;align-items:center">
+              <a id="progFolder" class="btn ghost" target="_blank" rel="noopener" hidden>📁 会社フォルダ</a>
+              <button class="btn ghost" type="button" id="progBack">← 企業一覧へ</button>
+            </div>
+          </div>
+          <div class="stepper" id="progStepper"></div>
+        </div>
+        <div id="progTodos"></div>
+      </div>
     </section>
 
     <!-- 会計 -->
@@ -333,6 +394,8 @@
     const tbody=page.querySelector('.recs tbody');
     const submitBtn=form.querySelector('button[type="submit"]');
     const idField=form.dataset.idfield;
+    const COLS=page.querySelectorAll('.recs thead th').length;
+    const rowAction=form.dataset.rowaction;
 
     function setMode(mode){
       form.dataset.mode=mode;
@@ -347,16 +410,29 @@
       }
     }
     async function loadList(){
-      tbody.innerHTML='<tr><td class="empty" colspan="4">読み込み中…</td></tr>';
+      tbody.innerHTML=`<tr><td class="empty" colspan="${COLS}">読み込み中…</td></tr>`;
       const j=await send({action:form.dataset.list});
-      if(!j.ok){tbody.innerHTML='<tr><td class="empty" colspan="4">取得失敗: '+(j.error||'')+'</td></tr>';return;}
+      if(!j.ok){tbody.innerHTML=`<tr><td class="empty" colspan="${COLS}">取得失敗: `+(j.error||'')+'</td></tr>';return;}
       const items=j.items||[];
-      if(!items.length){tbody.innerHTML='<tr><td class="empty" colspan="4">まだ登録がありません</td></tr>';return;}
+      if(!items.length){tbody.innerHTML=`<tr><td class="empty" colspan="${COLS}">まだ登録がありません</td></tr>`;return;}
       tbody.innerHTML='';
       items.forEach(it=>{
         const tr=document.createElement('tr');
         const c=PICKER_COLS[idField](it);
         tr.innerHTML=`<td>${esc(c[0])}</td><td>${esc(c[1])}</td><td>${esc(c[2])}</td><td><span class="pill">${esc(c[3])}</span></td>`;
+        if(rowAction){
+          const td=document.createElement('td');
+          const b=document.createElement('button');
+          b.type='button';b.className='miniact';b.textContent=form.dataset.rowactionlabel||'進める';
+          b.onclick=async ev=>{
+            ev.stopPropagation();
+            if(form.dataset.rowconfirm&&!confirm(form.dataset.rowconfirm))return;
+            const j2=await send({action:rowAction,[idField]:it[idField]},b);
+            if(j2.ok){toast('進行管理へ移動しました'+(it.companyName?'（'+it.companyName+'）':''));loadList();}
+            else toast('エラー: '+(j2.error||'不明'),true);
+          };
+          td.appendChild(b);tr.appendChild(td);
+        }
         tr.onclick=()=>pick(it);
         tbody.appendChild(tr);
       });
@@ -393,6 +469,118 @@
     setMode('new');
   });
   const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const isUrl=s=>/^https?:\/\//i.test(String(s||'').trim());
+
+  // (C) 企業進行管理タブ
+  (function(){
+    const listEl=document.getElementById('progList');
+    const detailEl=document.getElementById('progDetail');
+    const pickerEl=document.getElementById('progPicker');
+    const searchEl=document.getElementById('progSearch');
+    let allCompanies=[], current=null;
+
+    async function loadCompanies(){
+      listEl.innerHTML='<tr><td class="empty" colspan="4">読み込み中…</td></tr>';
+      const j=await send({action:'listManagedCompanies'});
+      if(!j.ok){listEl.innerHTML='<tr><td class="empty" colspan="4">取得失敗: '+(j.error||'')+'</td></tr>';return;}
+      allCompanies=j.items||[];
+      renderCompanyList();
+    }
+    function renderCompanyList(){
+      const q=(searchEl.value||'').trim().toLowerCase();
+      const items=allCompanies.filter(c=>!q||[c.companyName,c.industry,c.contactName].some(s=>String(s||'').toLowerCase().includes(q)));
+      if(!items.length){listEl.innerHTML='<tr><td class="empty" colspan="4">'+(allCompanies.length?'該当なし':'進行中の企業がまだありません（商談リストから「初回面談へ進める」）')+'</td></tr>';return;}
+      listEl.innerHTML='';
+      items.forEach(c=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${esc(c.companyName||'-')}</td><td>${esc(c.industry||'-')}</td><td>${esc(c.contactName||'-')}</td><td><span class="pill">${esc(c.phase||'-')}</span></td>`;
+        tr.onclick=()=>openCompany(c.companyId);
+        listEl.appendChild(tr);
+      });
+    }
+    async function openCompany(companyId){
+      const j=await send({action:'getCompanyProgress',companyId});
+      if(!j.ok){toast('取得失敗: '+(j.error||'不明'),true);return;}
+      current=j; renderDetail(j);
+      pickerEl.hidden=true; detailEl.hidden=false;
+      detailEl.scrollIntoView({behavior:'smooth',block:'start'});
+    }
+    function renderDetail(d){
+      const co=d.company||{};
+      document.getElementById('progCompany').textContent=co.companyName||'(無名企業)';
+      const fa=document.getElementById('progFolder');
+      if(co.folderUrl){fa.href=co.folderUrl;fa.hidden=false;}else{fa.hidden=true;}
+      // ステッパー
+      const stp=document.getElementById('progStepper');
+      const phases=d.phases||[];
+      const curIdx=phases.map(p=>p.phase).indexOf(co.phase);
+      stp.innerHTML='';
+      phases.forEach((p,i)=>{
+        const el=document.createElement('div');
+        let cls='step';
+        if(i===curIdx)cls+=' current'; else if(curIdx>=0&&i<curIdx)cls+=' done';
+        el.className=cls;
+        el.innerHTML=`<span class="n">${i+1}</span><span class="nm">${esc(p.phase)}</span>`;
+        el.onclick=async()=>{
+          if(p.phase===co.phase)return;
+          if(!confirm('フェーズを「'+p.phase+'」に変更しますか？'))return;
+          const j=await send({action:'setPhase',companyId:co.companyId,phase:p.phase});
+          if(j.ok){current=j;renderDetail(j);toast('フェーズを変更しました');}
+          else toast('エラー: '+(j.error||'不明'),true);
+        };
+        stp.appendChild(el);
+      });
+      // 現フェーズの To Do
+      const wrap=document.getElementById('progTodos');
+      const todos=(d.tasks||[]).filter(t=>t.phase===co.phase);
+      if(!todos.length){wrap.innerHTML='<div class="phasehdr">このフェーズに To Do はありません</div>';return;}
+      wrap.innerHTML=`<div class="phasehdr">📋 現フェーズ「${esc(co.phase)}」の To Do（${todos.filter(t=>t.done).length}/${todos.length} 完了）</div>`;
+      todos.forEach(t=>wrap.appendChild(renderTodo(co.companyId,t)));
+    }
+    function renderTodo(companyId,t){
+      const card=document.createElement('div');
+      card.className='todocard'+(t.done?' done':'');
+      const refLabel=!isUrl(t.refUrl)?esc(t.refUrl):(/drive\.google\.com\/drive\/folders|\/folders\//.test(t.refUrl)?'📁 格納フォルダを開く':'📄 送付/参考資料を開く');
+      let links='';
+      if(t.refUrl) links=`<div class="links"><a class="reflink" href="${esc(t.refUrl)}" target="_blank" rel="noopener">${refLabel}</a></div>`;
+      else if(t.folderPending) links=`<div class="links"><span class="reflink" style="opacity:.7;cursor:default">📁 フォルダ作成中…（1分以内に表示されます）</span></div>`;
+      card.innerHTML=`
+        <h3>${t.done?'✅':'⬜'} ${esc(t.taskName)}${t.done?`<span class="doneat">完了: ${esc(t.completedAt)}</span>`:''}</h3>
+        ${t.desc?`<p class="tdesc">${esc(t.desc)}</p>`:''}
+        ${links}
+        <div class="memo"><input placeholder="このタスクのURL/メモ（TimeRexリンク等）" value="${esc(t.memo||'')}"></div>
+        <div class="actions" style="margin-top:10px"></div>`;
+      const memoInput=card.querySelector('.memo input');
+      const acts=card.querySelector('.actions');
+      const doneBtn=document.createElement('button');
+      doneBtn.className='btn'+(t.done?' ghost':'');doneBtn.type='button';
+      doneBtn.textContent=t.done?'未完了に戻す':'完了にする';
+      doneBtn.onclick=async()=>{
+        const j=await send({action:'completeTask',companyId,taskKey:t.taskKey,done:!t.done,memo:memoInput.value},doneBtn);
+        if(j.ok){current=j;renderDetail(j);toast(t.done?'未完了に戻しました':'完了しました');}
+        else toast('エラー: '+(j.error||'不明'),true);
+      };
+      acts.appendChild(doneBtn);
+      if(!t.done){
+        const saveBtn=document.createElement('button');
+        saveBtn.className='btn ghost';saveBtn.type='button';saveBtn.textContent='メモを保存';
+        saveBtn.onclick=async()=>{
+          const j=await send({action:'completeTask',companyId,taskKey:t.taskKey,done:false,memo:memoInput.value},saveBtn);
+          if(j.ok){current=j;toast('メモを保存しました');}
+          else toast('エラー: '+(j.error||'不明'),true);
+        };
+        acts.appendChild(saveBtn);
+      }
+      return card;
+    }
+    document.getElementById('progRefresh').onclick=loadCompanies;
+    document.getElementById('progBack').onclick=()=>{detailEl.hidden=true;pickerEl.hidden=false;loadCompanies();};
+    searchEl.oninput=renderCompanyList;
+    // タブを開いたとき初回ロード
+    document.querySelector('.nav button[data-page="progress"]').addEventListener('click',()=>{
+      if(detailEl.hidden) loadCompanies();
+    });
+  })();
 
   // トースト
   function toast(msg,err){

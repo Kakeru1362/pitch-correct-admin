@@ -1,4 +1,4 @@
-# Pitch Correct 運営入力コンソール
+# RHC（Recruit Health Consulting） 運営入力コンソール
 
 運営マスタ（Googleスプレッドシート）への入力をまとめた静的Webアプリ。
 会議情報 / 企業情報 / 会計 を入力すると、GAS Web App 経由でスプシに自動保存される。
