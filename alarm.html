@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>サビ起き｜ミュージックアラーム</title>
+<style>
+  :root{
+    --bg:#0e1116; --card:#171c24; --card2:#1f2630; --line:#2a323d;
+    --txt:#e9eef5; --sub:#9aa7b6; --accent:#5b8cff; --accent2:#3d6aff;
+    --danger:#ff5b6e; --ok:#37d39b; --warn:#ffb44d;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+    padding-bottom:90px; line-height:1.6;
+  }
+  header{
+    position:sticky; top:0; z-index:10; background:rgba(14,17,22,.92);
+    backdrop-filter:blur(8px); border-bottom:1px solid var(--line);
+    padding:14px 16px 10px;
+  }
+  header h1{font-size:18px;margin:0;display:flex;align-items:center;gap:8px}
+  header .clock{font-size:13px;color:var(--sub);margin-top:2px;font-variant-numeric:tabular-nums}
+  .wrap{max-width:560px;margin:0 auto;padding:14px 16px}
+  .tab{display:none}
+  .tab.active{display:block}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+  .card h2{font-size:15px;margin:0 0 10px}
+  .muted{color:var(--sub);font-size:13px}
+  .row{display:flex;gap:10px;align-items:center}
+  .row.between{justify-content:space-between}
+  .grow{flex:1;min-width:0}
+  label.fld{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px}
+  input,select{
+    width:100%;background:var(--card2);border:1px solid var(--line);color:var(--txt);
+    border-radius:10px;padding:11px 12px;font-size:15px;outline:none;
+  }
+  input[type=file]{padding:9px}
+  input[type=time]{font-variant-numeric:tabular-nums}
+  button{
+    background:var(--card2);color:var(--txt);border:1px solid var(--line);
+    border-radius:10px;padding:11px 14px;font-size:14px;cursor:pointer;font-weight:600;
+  }
+  button:active{transform:scale(.98)}
+  button.primary{background:var(--accent2);border-color:var(--accent2);color:#fff}
+  button.ghost{background:transparent}
+  button.danger{background:transparent;border-color:var(--danger);color:var(--danger)}
+  button.sm{padding:7px 10px;font-size:13px}
+  button.icon{padding:8px 11px}
+  .fab{position:fixed;right:16px;bottom:84px;z-index:20;border-radius:50%;width:56px;height:56px;
+    background:var(--accent2);border-color:var(--accent2);color:#fff;font-size:26px;padding:0;
+    box-shadow:0 6px 20px rgba(61,106,255,.4)}
+
+  /* days picker */
+  .days{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .days .d{flex:1;min-width:36px;text-align:center;padding:9px 0;border:1px solid var(--line);
+    border-radius:9px;background:var(--card2);font-size:13px;cursor:pointer;user-select:none}
+  .days .d.on{background:var(--accent2);border-color:var(--accent2);color:#fff}
+  .days .d.sun.on{background:var(--danger);border-color:var(--danger)}
+  .days .d.sat.on{background:var(--accent);border-color:var(--accent)}
+
+  /* toggle */
+  .sw{position:relative;width:46px;height:27px;flex:0 0 auto}
+  .sw input{display:none}
+  .sw span{position:absolute;inset:0;background:var(--line);border-radius:20px;transition:.2s}
+  .sw span:before{content:"";position:absolute;width:21px;height:21px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+  .sw input:checked + span{background:var(--ok)}
+  .sw input:checked + span:before{transform:translateX(19px)}
+
+  /* alarm list item */
+  .alarm{display:flex;align-items:center;gap:12px}
+  .alarm .time{font-size:34px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:1px}
+  .alarm.off .time,.alarm.off .meta{opacity:.42}
+  .alarm .meta{font-size:12px;color:var(--sub);margin-top:1px}
+  .chip{display:inline-block;font-size:11px;background:var(--card2);border:1px solid var(--line);
+    border-radius:20px;padding:2px 9px;margin:2px 4px 0 0;color:var(--sub)}
+  .empty{text-align:center;color:var(--sub);padding:34px 10px;font-size:14px}
+
+  /* track item */
+  .track{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
+  .track:first-child{border-top:none}
+  .track .nm{font-weight:600;font-size:14px;word-break:break-all}
+  .track .pos{font-size:12px;color:var(--accent);font-variant-numeric:tabular-nums}
+
+  /* bottom nav */
+  nav{position:fixed;left:0;right:0;bottom:0;z-index:15;background:rgba(20,25,32,.96);
+    backdrop-filter:blur(8px);border-top:1px solid var(--line);display:flex}
+  nav button{flex:1;border:none;background:none;border-radius:0;padding:10px 0 14px;color:var(--sub);font-size:11px;font-weight:600}
+  nav button .ic{display:block;font-size:21px;margin-bottom:1px}
+  nav button.on{color:var(--accent)}
+
+  /* modal */
+  .modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);display:none;align-items:flex-end}
+  .modal.show{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:560px;margin:0 auto;border-radius:18px 18px 0 0;
+    padding:18px 16px calc(18px + env(safe-area-inset-bottom)); max-height:92vh;overflow:auto}
+  .sheet h2{margin:0 0 4px;font-size:17px}
+
+  /* ringing overlay */
+  .ring{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% 30%,#1d2740,#0a0d12);text-align:center;padding:30px}
+  .ring.show{display:flex}
+  .ring .now{font-size:64px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:2px}
+  .ring .label{font-size:16px;color:var(--sub);margin-top:4px}
+  .ring .song{font-size:18px;margin-top:18px;font-weight:600}
+  .ring .vol{font-size:12px;color:var(--sub);margin-top:6px}
+  .ring .actions{margin-top:34px;display:flex;flex-direction:column;gap:12px;width:100%;max-width:300px}
+  .ring .actions button{padding:16px;font-size:16px}
+  .pulse{animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.06);opacity:1}}
+  .calc{font-size:28px;font-weight:700;margin:6px 0 10px}
+  .note{font-size:12px;color:var(--warn);background:rgba(255,180,77,.1);border:1px solid rgba(255,180,77,.3);
+    border-radius:10px;padding:10px 12px;margin-bottom:12px}
+  .hint{font-size:12px;color:var(--sub);margin-top:4px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⏰ サビ起き <span class="muted" style="font-size:11px;font-weight:400">試作版</span></h1>
+  <div class="clock" id="hdrClock">--:--:--</div>
+</header>
+
+<!-- ============ アラーム ============ -->
+<div class="tab active" id="tab-alarm">
+  <div class="wrap">
+    <div class="note">
+      ⚠ Web試作版です。<b>画面を消す/タブを閉じると鳴らない</b>ことがあります。確実に鳴らすには画面を点けたままにしてください。
+    </div>
+    <div id="alarmList"></div>
+  </div>
+  <button class="fab" id="fabAlarm">＋</button>
+</div>
+
+<!-- ============ マイミュージック ============ -->
+<div class="tab" id="tab-music">
+  <div class="wrap">
+    <div class="card">
+      <h2>🎵 曲を追加</h2>
+      <p class="muted" style="margin-top:0">端末内の音楽ファイル（mp3など）を選んで追加します。サビの開始位置を秒で設定できます。</p>
+      <input type="file" id="fileInput" accept="audio/*" multiple>
+    </div>
+    <div class="card">
+      <h2>マイミュージック</h2>
+      <div id="trackList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 設定 ============ -->
+<div class="tab" id="tab-set">
+  <div class="wrap">
+    <div class="card">
+      <h2>⚙️ 設定</h2>
+      <label class="fld">音量フェードイン（秒）— 0で即最大</label>
+      <input type="number" id="setFade" min="0" max="120" step="1">
+      <div class="hint">小さい音量から徐々に大きくして優しく起こします。</div>
+
+      <label class="fld">スヌーズ間隔（分）</label>
+      <input type="number" id="setSnooze" min="1" max="30" step="1">
+
+      <label class="fld">アラームの解除方法（二度寝防止）</label>
+      <select id="setDismiss">
+        <option value="tap">連続タップで解除</option>
+        <option value="calc">計算問題で解除</option>
+      </select>
+      <div class="hint" id="dismissHint"></div>
+
+      <label class="fld" id="tapCountWrap">解除に必要なタップ回数</label>
+      <input type="number" id="setTapCount" min="1" max="50" step="1">
+
+      <div style="margin-top:16px">
+        <button class="primary" id="saveSettings">設定を保存</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>動作テスト</h2>
+      <p class="muted" style="margin-top:0">登録した曲で、アラーム画面の鳴動をすぐ試せます。</p>
+      <select id="testTrack"></select>
+      <div style="margin-top:10px"><button class="ghost" id="testFire">今すぐ鳴らしてみる</button></div>
+    </div>
+    <p class="muted" style="text-align:center;font-size:11px">設定とサビ位置は端末内に保存されます（localStorage / IndexedDB）。</p>
+  </div>
+</div>
+
+<!-- bottom nav -->
+<nav>
+  <button data-tab="alarm" class="on"><span class="ic">⏰</span>アラーム</button>
+  <button data-tab="music"><span class="ic">🎵</span>マイミュージック</button>
+  <button data-tab="set"><span class="ic">⚙️</span>設定</button>
+</nav>
+
+<!-- ============ アラーム編集モーダル ============ -->
+<div class="modal" id="alarmModal">
+  <div class="sheet">
+    <h2 id="alarmModalTitle">アラームを追加</h2>
+    <label class="fld">時刻</label>
+    <input type="time" id="aTime">
+    <label class="fld">繰り返す曜日（選ばなければ1回限り）</label>
+    <div class="days" id="aDays"></div>
+    <label class="fld">再生する曲（サビから流れます）</label>
+    <select id="aTrack"></select>
+    <div class="hint" id="aTrackHint"></div>
+    <label class="fld">ラベル（任意）</label>
+    <input type="text" id="aLabel" placeholder="例：起床、二度寝防止">
+    <div class="row" style="margin-top:18px;gap:10px">
+      <button class="danger" id="aDelete" style="display:none">削除</button>
+      <div class="grow"></div>
+      <button class="ghost" id="aCancel">キャンセル</button>
+      <button class="primary" id="aSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ サビ位置設定モーダル ============ -->
+<div class="modal" id="trackModal">
+  <div class="sheet">
+    <h2>サビ位置の設定</h2>
+    <div class="muted" id="tmName" style="word-break:break-all;margin-bottom:6px"></div>
+    <label class="fld">サビ開始位置（分・秒）</label>
+    <div class="row">
+      <div class="grow"><input type="number" id="tmMin" min="0" step="1"> <div class="hint">分</div></div>
+      <div class="grow"><input type="number" id="tmSec" min="0" max="59" step="1"> <div class="hint">秒</div></div>
+    </div>
+    <div class="row" style="margin-top:12px;gap:8px">
+      <button class="sm ghost" id="tmPreview">▶ この位置から試聴</button>
+      <button class="sm ghost" id="tmStop">■ 停止</button>
+      <button class="sm ghost" id="tmUseCurrent">現在地をサビに</button>
+    </div>
+    <div class="hint" id="tmCur">--:--</div>
+    <div class="row" style="margin-top:18px">
+      <button class="danger" id="tmDelete">曲を削除</button>
+      <div class="grow"></div>
+      <button class="ghost" id="tmCancel">閉じる</button>
+      <button class="primary" id="tmSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 鳴動画面 ============ -->
+<div class="ring" id="ring">
+  <div class="now pulse" id="ringNow">--:--</div>
+  <div class="label" id="ringLabel"></div>
+  <div class="song" id="ringSong">🎵</div>
+  <div class="vol" id="ringVol"></div>
+  <div class="actions">
+    <div id="dismissArea"></div>
+    <button class="ghost" id="snoozeBtn"></button>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- IndexedDB（音楽ファイル本体を保存） ---------- */
+const DB_NAME="sabioki", STORE="blobs";
+let _db=null;
+function db(){
+  return new Promise((res,rej)=>{
+    if(_db) return res(_db);
+    const r=indexedDB.open(DB_NAME,1);
+    r.onupgradeneeded=()=>r.result.createObjectStore(STORE);
+    r.onsuccess=()=>{_db=r.result;res(_db)};
+    r.onerror=()=>rej(r.error);
+  });
+}
+async function blobPut(id,blob){const d=await db();return new Promise((res,rej)=>{const t=d.transaction(STORE,"readwrite");t.objectStore(STORE).put(blob,id);t.oncomplete=res;t.onerror=()=>rej(t.error)})}
+async function blobGet(id){const d=await db();return new Promise((res,rej)=>{const t=d.transaction(STORE,"readonly");const q=t.objectStore(STORE).get(id);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
+async function blobDel(id){const d=await db();return new Promise((res,rej)=>{const t=d.transaction(STORE,"readwrite");t.objectStore(STORE).delete(id);t.oncomplete=res;t.onerror=()=>rej(t.error)})}
+
+/* ---------- 状態（メタデータは localStorage） ---------- */
+const LS={tracks:"sabioki_tracks",alarms:"sabioki_alarms",set:"sabioki_set"};
+const load=(k,def)=>{try{return JSON.parse(localStorage.getItem(k))??def}catch(e){return def}};
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+
+let tracks=load(LS.tracks,[]);   // {id,name,chorusSec}
+let alarms=load(LS.alarms,[]);   // {id,h,m,days:[],trackId,enabled,label}
+let settings=Object.assign({fadeSec:20,snoozeMin:5,dismiss:"tap",tapCount:10},load(LS.set,{}));
+
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const pad=n=>String(n).padStart(2,"0");
+const fmtSec=s=>`${pad(Math.floor(s/60))}:${pad(Math.floor(s%60))}`;
+const $=id=>document.getElementById(id);
+const DAYNAME=["日","月","火","水","木","金","土"];
+
+/* ---------- タブ切替 ---------- */
+document.querySelectorAll("nav button").forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll("nav button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    $("tab-"+b.dataset.tab).classList.add("active");
+  };
+});
+
+/* ---------- ヘッダー時計 ---------- */
+function tickClock(){const d=new Date();$("hdrClock").textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}  (${DAYNAME[d.getDay()]})`;}
+
+/* ================= マイミュージック ================= */
+$("fileInput").onchange=async e=>{
+  const files=[...e.target.files];
+  for(const f of files){
+    const id=uid();
+    try{ await blobPut(id,f); }catch(err){ alert("保存に失敗しました: "+err); continue; }
+    tracks.push({id,name:f.name.replace(/\.[^.]+$/,""),chorusSec:0});
+  }
+  save(LS.tracks,tracks);
+  e.target.value="";
+  renderTracks(); refreshTrackSelects();
+};
+
+function renderTracks(){
+  const el=$("trackList");
+  if(!tracks.length){el.innerHTML='<div class="empty">まだ曲がありません。<br>上の「曲を追加」から追加してください。</div>';return;}
+  el.innerHTML="";
+  tracks.forEach(t=>{
+    const row=document.createElement("div");
+    row.className="track";
+    row.innerHTML=`<div class="grow"><div class="nm">${esc(t.name)}</div>
+      <div class="pos">サビ: ${fmtSec(t.chorusSec)} から</div></div>
+      <button class="sm ghost">設定</button>`;
+    row.querySelector("button").onclick=()=>openTrackModal(t.id);
+    el.appendChild(row);
+  });
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ----- サビ位置モーダル ----- */
+let tmId=null, tmAudio=null, tmTimer=null;
+async function openTrackModal(id){
+  const t=tracks.find(x=>x.id===id); if(!t)return;
+  tmId=id;
+  $("tmName").textContent=t.name;
+  $("tmMin").value=Math.floor(t.chorusSec/60);
+  $("tmSec").value=Math.floor(t.chorusSec%60);
+  $("tmCur").textContent="--:--";
+  const blob=await blobGet(id);
+  if(tmAudio){tmAudio.pause();}
+  tmAudio=new Audio(URL.createObjectURL(blob));
+  tmAudio.ontimeupdate=()=>{ $("tmCur").textContent="再生位置: "+fmtSec(tmAudio.currentTime); };
+  $("trackModal").classList.add("show");
+}
+function tmPos(){return (+$("tmMin").value||0)*60+(+$("tmSec").value||0);}
+$("tmPreview").onclick=()=>{ if(!tmAudio)return; tmAudio.currentTime=tmPos(); tmAudio.volume=1; tmAudio.play(); };
+$("tmStop").onclick=()=>{ if(tmAudio)tmAudio.pause(); };
+$("tmUseCurrent").onclick=()=>{ if(!tmAudio)return; const s=tmAudio.currentTime; $("tmMin").value=Math.floor(s/60); $("tmSec").value=Math.floor(s%60); };
+$("tmSave").onclick=()=>{
+  const t=tracks.find(x=>x.id===tmId); if(t){t.chorusSec=tmPos();save(LS.tracks,tracks);}
+  closeTrackModal(); renderTracks();
+};
+$("tmDelete").onclick=async()=>{
+  if(!confirm("この曲を削除しますか？"))return;
+  await blobDel(tmId);
+  tracks=tracks.filter(x=>x.id!==tmId); save(LS.tracks,tracks);
+  // この曲を使うアラームは曲未設定に
+  alarms.forEach(a=>{if(a.trackId===tmId)a.trackId=null;}); save(LS.alarms,alarms);
+  closeTrackModal(); renderTracks(); renderAlarms(); refreshTrackSelects();
+};
+$("tmCancel").onclick=closeTrackModal;
+function closeTrackModal(){ if(tmAudio){tmAudio.pause();tmAudio=null;} $("trackModal").classList.remove("show"); }
+
+function refreshTrackSelects(){
+  const opts=tracks.length
+    ? tracks.map(t=>`<option value="${t.id}">${esc(t.name)}（サビ ${fmtSec(t.chorusSec)}）</option>`).join("")
+    : "";
+  $("aTrack").innerHTML = opts || `<option value="">曲がありません</option>`;
+  $("testTrack").innerHTML = opts || `<option value="">曲がありません</option>`;
+}
+
+/* ================= アラーム ================= */
+function renderAlarms(){
+  const el=$("alarmList");
+  if(!alarms.length){el.innerHTML='<div class="empty">アラームがありません。<br>右下の ＋ から追加してください。</div>';return;}
+  el.innerHTML="";
+  alarms.slice().sort((a,b)=>(a.h*60+a.m)-(b.h*60+b.m)).forEach(a=>{
+    const t=tracks.find(x=>x.id===a.trackId);
+    const dayTxt=a.days.length? a.days.slice().sort().map(d=>DAYNAME[d]).join("・") : "1回限り";
+    const card=document.createElement("div");
+    card.className="card";
+    const inner=document.createElement("div");
+    inner.className="alarm"+(a.enabled?"":" off");
+    inner.innerHTML=`<div class="grow">
+        <div class="time">${pad(a.h)}:${pad(a.m)}</div>
+        <div class="meta">${esc(a.label||"")}</div>
+        <div><span class="chip">${dayTxt}</span><span class="chip">🎵 ${t?esc(t.name):"曲未設定"}</span>${t?`<span class="chip">サビ ${fmtSec(t.chorusSec)}</span>`:""}</div>
+      </div>
+      <label class="sw"><input type="checkbox" ${a.enabled?"checked":""}><span></span></label>`;
+    inner.querySelector(".grow").onclick=()=>openAlarmModal(a.id);
+    inner.querySelector("input").onchange=e=>{a.enabled=e.target.checked;save(LS.alarms,alarms);renderAlarms();};
+    card.appendChild(inner);
+    el.appendChild(card);
+  });
+}
+
+let aId=null, aDays=[];
+function openAlarmModal(id){
+  refreshTrackSelects();
+  if(id){
+    const a=alarms.find(x=>x.id===id); if(!a)return;
+    aId=id;
+    $("alarmModalTitle").textContent="アラームを編集";
+    $("aTime").value=`${pad(a.h)}:${pad(a.m)}`;
+    aDays=a.days.slice();
+    $("aTrack").value=a.trackId||"";
+    $("aLabel").value=a.label||"";
+    $("aDelete").style.display="";
+  }else{
+    aId=null;
+    $("alarmModalTitle").textContent="アラームを追加";
+    const d=new Date(); $("aTime").value=`${pad(d.getHours())}:${pad((d.getMinutes()+1)%60)}`;
+    aDays=[]; $("aTrack").value=tracks[0]?.id||""; $("aLabel").value="";
+    $("aDelete").style.display="none";
+  }
+  $("aTrackHint").textContent = tracks.length? "" : "先に「マイミュージック」で曲を追加してください。";
+  renderDayPicker();
+  $("alarmModal").classList.add("show");
+}
+function renderDayPicker(){
+  const wrap=$("aDays"); wrap.innerHTML="";
+  for(let d=0;d<7;d++){
+    const b=document.createElement("div");
+    b.className="d"+(d===0?" sun":d===6?" sat":"")+(aDays.includes(d)?" on":"");
+    b.textContent=DAYNAME[d];
+    b.onclick=()=>{ aDays=aDays.includes(d)?aDays.filter(x=>x!==d):[...aDays,d]; renderDayPicker(); };
+    wrap.appendChild(b);
+  }
+}
+$("aSave").onclick=()=>{
+  const [h,m]=$("aTime").value.split(":").map(Number);
+  if(isNaN(h)){alert("時刻を入力してください");return;}
+  const data={h,m,days:aDays.slice(),trackId:$("aTrack").value||null,label:$("aLabel").value.trim(),enabled:true};
+  if(aId){Object.assign(alarms.find(x=>x.id===aId),data);}
+  else{alarms.push(Object.assign({id:uid()},data));}
+  save(LS.alarms,alarms); $("alarmModal").classList.remove("show"); renderAlarms();
+};
+$("aDelete").onclick=()=>{
+  if(!confirm("このアラームを削除しますか？"))return;
+  alarms=alarms.filter(x=>x.id!==aId); save(LS.alarms,alarms);
+  $("alarmModal").classList.remove("show"); renderAlarms();
+};
+$("aCancel").onclick=()=>$("alarmModal").classList.remove("show");
+$("fabAlarm").onclick=()=>openAlarmModal(null);
+
+/* ================= 設定 ================= */
+function renderSettings(){
+  $("setFade").value=settings.fadeSec;
+  $("setSnooze").value=settings.snoozeMin;
+  $("setDismiss").value=settings.dismiss;
+  $("setTapCount").value=settings.tapCount;
+  updateDismissUI();
+}
+function updateDismissUI(){
+  const calc=$("setDismiss").value==="calc";
+  $("dismissHint").textContent=calc?"鳴動中に簡単な計算問題が出ます。正解で停止します。":"鳴動中に「停止」ボタンを規定回数タップすると停止します。";
+  $("tapCountWrap").style.display=calc?"none":"";
+  $("setTapCount").style.display=calc?"none":"";
+}
+$("setDismiss").onchange=updateDismissUI;
+$("saveSettings").onclick=()=>{
+  settings.fadeSec=Math.max(0,+$("setFade").value||0);
+  settings.snoozeMin=Math.max(1,+$("setSnooze").value||5);
+  settings.dismiss=$("setDismiss").value;
+  settings.tapCount=Math.max(1,+$("setTapCount").value||10);
+  save(LS.set,settings);
+  alert("設定を保存しました");
+};
+$("testFire").onclick=()=>{
+  const id=$("testTrack").value;
+  if(!id){alert("先に曲を追加してください");return;}
+  fireAlarm({trackId:id,label:"テスト鳴動",h:new Date().getHours(),m:new Date().getMinutes()});
+};
+
+/* ================= 鳴動エンジン ================= */
+let ringAudio=null, fadeTimer=null, ringClockTimer=null;
+let snoozeAt=null, snoozeAlarm=null;
+
+async function fireAlarm(alarm){
+  if($("ring").classList.contains("show"))return; // 既に鳴動中
+  const track=tracks.find(t=>t.id===alarm.trackId);
+  // 鳴動画面表示
+  $("ring").classList.add("show");
+  $("ringLabel").textContent=alarm.label||"";
+  $("ringSong").textContent="🎵 "+(track?track.name:"（曲未設定）");
+  updateRingClock(); ringClockTimer=setInterval(updateRingClock,1000);
+
+  // 解除UI構築
+  buildDismissArea();
+  $("snoozeBtn").textContent=`もう少し（${settings.snoozeMin}分スヌーズ）`;
+  $("snoozeBtn").onclick=()=>{ snooze(alarm); };
+
+  if(!track){ $("ringVol").textContent="曲が設定されていません"; return; }
+
+  // 音源再生（サビ位置から）
+  try{
+    const blob=await blobGet(track.id);
+    ringAudio=new Audio(URL.createObjectURL(blob));
+    ringAudio.loop=true;
+    ringAudio.addEventListener("loadedmetadata",()=>{
+      let pos=track.chorusSec||0;
+      if(pos>=ringAudio.duration) pos=0;
+      ringAudio.currentTime=pos;
+    });
+    const fade=settings.fadeSec;
+    ringAudio.volume=fade>0?0:1;
+    await ringAudio.play().catch(()=>{ $("ringVol").textContent="⚠ 自動再生がブロックされました。画面をタップしてください。"; document.addEventListener("click",resumeOnce,{once:true}); });
+    if(fade>0) startFade();
+    else $("ringVol").textContent="🔊 音量 最大";
+  }catch(err){ $("ringVol").textContent="再生エラー: "+err; }
+}
+function resumeOnce(){ if(ringAudio){ringAudio.play(); if(settings.fadeSec>0)startFade(); else ringAudio.volume=1;} }
+function startFade(){
+  clearInterval(fadeTimer);
+  const steps=Math.max(1,settings.fadeSec); let i=0;
+  ringAudio.volume=0;
+  fadeTimer=setInterval(()=>{
+    i++; const v=Math.min(1,i/steps); if(ringAudio)ringAudio.volume=v;
+    $("ringVol").textContent=`🔊 音量 ${Math.round(v*100)}%（フェードイン中）`;
+    if(v>=1){clearInterval(fadeTimer);$("ringVol").textContent="🔊 音量 最大";}
+  },1000);
+}
+function updateRingClock(){const d=new Date();$("ringNow").textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}`;}
+
+function buildDismissArea(){
+  const area=$("dismissArea"); area.innerHTML="";
+  if(settings.dismiss==="calc"){
+    const a=2+Math.floor(Math.random()*9), b=2+Math.floor(Math.random()*9);
+    const q=document.createElement("div"); q.className="calc"; q.textContent=`${a} × ${b} = ?`;
+    const inp=document.createElement("input"); inp.type="number"; inp.inputMode="numeric"; inp.placeholder="答え";
+    const btn=document.createElement("button"); btn.className="primary"; btn.textContent="解除";
+    btn.style.marginTop="10px"; btn.style.width="100%";
+    btn.onclick=()=>{ if(+inp.value===a*b){stopRing();}else{inp.value="";q.textContent=`不正解！ ${a} × ${b} = ?`;} };
+    area.append(q,inp,btn);
+  }else{
+    let left=settings.tapCount;
+    const btn=document.createElement("button"); btn.className="danger"; btn.style.width="100%";
+    btn.textContent=`停止（あと ${left} 回タップ）`;
+    btn.onclick=()=>{ left--; if(left<=0){stopRing();}else{btn.textContent=`停止（あと ${left} 回タップ）`;} };
+    area.appendChild(btn);
+  }
+}
+function stopRing(){
+  if(ringAudio){ringAudio.pause();ringAudio=null;}
+  clearInterval(fadeTimer);clearInterval(ringClockTimer);
+  $("ring").classList.remove("show");
+  snoozeAt=null;snoozeAlarm=null;
+}
+function snooze(alarm){
+  // 一旦停止し、N分後に再鳴動
+  if(ringAudio){ringAudio.pause();ringAudio=null;}
+  clearInterval(fadeTimer);clearInterval(ringClockTimer);
+  $("ring").classList.remove("show");
+  snoozeAlarm=alarm;
+  snoozeAt=Date.now()+settings.snoozeMin*60000;
+}
+
+/* ----- 毎秒チェック ----- */
+function checkAlarms(){
+  const now=new Date();
+  // スヌーズ
+  if(snoozeAt && Date.now()>=snoozeAt){
+    const a=snoozeAlarm; snoozeAt=null; snoozeAlarm=null;
+    fireAlarm(a); return;
+  }
+  if($("ring").classList.contains("show"))return;
+  const key=`${now.getHours()}:${now.getMinutes()}`;
+  alarms.forEach(a=>{
+    if(!a.enabled)return;
+    if(a.h!==now.getHours()||a.m!==now.getMinutes())return;
+    const dayOk = a.days.length? a.days.includes(now.getDay()) : true;
+    if(!dayOk)return;
+    const fkey=a.id+"@"+now.toDateString()+" "+key;
+    if(firedKeys.has(fkey))return;
+    firedKeys.add(fkey);
+    if(a.days.length===0){ a.enabled=false; save(LS.alarms,alarms); renderAlarms(); } // 1回限り
+    fireAlarm(a);
+  });
+}
+const firedKeys=new Set();
+
+/* ----- タブ閉じ警告（鳴動精度のため） ----- */
+window.addEventListener("beforeunload",e=>{
+  if(alarms.some(a=>a.enabled)){ e.preventDefault(); e.returnValue=""; }
+});
+
+/* ----- 初期化 ----- */
+renderTracks(); renderAlarms(); refreshTrackSelects(); renderSettings();
+tickClock();
+setInterval(()=>{ tickClock(); checkAlarms(); },1000);
+</script>
+</body>
+</html>
