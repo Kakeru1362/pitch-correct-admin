@@ -236,6 +236,43 @@ main{flex:1;overflow:hidden;position:relative}
 .tthour .h{flex:none;width:34px;font-weight:800;color:var(--blue)}
 .tthour .mins{flex:1;color:#3a3a3f;letter-spacing:2px;line-height:1.7}
 .subnote{font-size:12px;color:#9a9aa0;padding:0 16px 14px}
+/* ===== TOP : ルート検索フォーム ===== */
+.searchtabs{flex:none;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:flex-end;justify-content:space-between;padding:8px 14px 0}
+.stabs{display:flex;gap:20px}
+.stabs button{border:none;background:none;font-family:inherit;font-size:16px;font-weight:700;color:#9a9aa0;padding:10px 2px;position:relative;cursor:pointer}
+.stabs button.on{color:var(--blue)}
+.stabs button.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;background:var(--blue);border-radius:2px}
+.topicons{display:flex;gap:2px;padding-bottom:4px}
+.topicons button{border:none;background:none;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:#3a3a3f;cursor:pointer;width:50px}
+.ti-ic{position:relative;line-height:1;color:#6e6e73}
+.ti-ic svg{width:24px;height:24px;stroke:#6e6e73;fill:none;stroke-width:1.7}
+.ti-ic .dot{position:absolute;top:-2px;right:6px;width:8px;height:8px;border-radius:50%;background:#17c07b;border:1.5px solid #fff}
+.formwrap{background:#fff;padding:14px 14px 8px}
+.fld{display:flex;align-items:center;gap:12px;background:#ededf0;border-radius:8px;padding:11px 12px;margin-top:8px}
+.fld:first-child{margin-top:0}
+.lbl{flex:none;color:#fff;font-weight:700;font-size:15px;border-radius:6px;padding:9px 13px;background:#34b96b}
+.fld input{flex:1;min-width:0;border:none;background:transparent;font-size:22px;font-weight:600;font-family:inherit;outline:none;color:var(--txt)}
+.midrow{display:flex;align-items:center;justify-content:space-between;padding:10px 2px 2px}
+.viabtn{border:1px solid #cfcfd4;background:#fff;border-radius:9px;padding:10px 18px;font-family:inherit;font-size:15px;color:#3a3a3f;cursor:pointer}
+.midbtns{display:flex;gap:14px}
+.circ{width:48px;height:48px;border-radius:50%;border:1px solid #cfcfd4;background:#fff;font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.circ svg{width:22px;height:22px;stroke:#3a3a3f;fill:none;stroke-width:1.8}
+.viafld{display:flex;align-items:center;gap:10px;background:#f4f4f6;border-radius:8px;padding:9px 12px;margin:8px 0 0}
+.viafld .vl{flex:none;background:#9a9aa0;color:#fff;font-size:13px;font-weight:700;border-radius:6px;padding:7px 10px}
+.viafld input{flex:1;min-width:0;border:none;background:transparent;font-size:18px;font-family:inherit;outline:none}
+.viafld .vx{border:none;background:none;color:#b0b0b6;font-size:18px;cursor:pointer}
+.datetime{display:flex;align-items:center;gap:10px;width:calc(100% - 28px);margin:10px 14px 0;background:#fff;border:1px solid #cfcfd4;border-radius:11px;padding:15px 14px;font-family:inherit;font-size:17px;color:var(--txt);cursor:pointer}
+.dt-clock{display:inline-flex}.dt-clock svg{width:20px;height:20px;stroke:#3a3a3f;fill:none;stroke-width:1.8}
+.dt-right{margin-left:auto;color:#3a3a3f;font-size:14px}
+.condbar{display:flex;align-items:stretch;width:calc(100% - 28px);margin:8px 14px 0;border:1px solid #cfcfd4;border-radius:11px;overflow:hidden}
+.condbar button{flex:1;border:none;border-left:1px solid #ededf0;background:#fff;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:10px;color:#3a3a3f;padding:11px 1px;cursor:pointer;line-height:1.2}
+.condbar button:first-child{border-left:none}
+.condbar button.dis{color:#c2c2c8}
+.condbar .cic{height:22px;display:flex;align-items:center;justify-content:center}
+.condbar .cic svg{width:21px;height:21px;stroke:#3a3a3f;fill:none;stroke-width:1.7}
+.condbar button.dis .cic svg{stroke:#c2c2c8}
+.condbar .cbox{border:1.6px solid #3a3a3f;border-radius:4px;font-size:12px;font-weight:800;padding:1px 4px}
+.searchbtn{display:block;width:calc(100% - 28px);margin:22px 14px 16px;background:linear-gradient(#f9a73a,#f4951f);color:#fff;border:none;border-radius:11px;padding:17px;font-size:20px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 3px 7px rgba(0,0,0,.18);letter-spacing:4px}
 </style>
 </head>
 <body>
@@ -251,10 +288,68 @@ main{flex:1;overflow:hidden;position:relative}
   </div>
 
   <main>
-    <!-- ============ TOP : ルート詳細 ============ -->
+    <!-- ============ TOP : ルート検索フォーム ============ -->
     <section class="screen active" id="sc-top">
+      <div class="searchtabs">
+        <div class="stabs">
+          <button class="on" onclick="searchTab(0,this)">ルート検索</button>
+          <button onclick="searchTab(1,this)">最寄駅検索</button>
+        </div>
+        <div class="topicons">
+          <button onclick="toast('乗換案内プラスの紹介ページを開きます（デモ）')"><span class="ti-ic"><svg viewBox="0 0 24 24"><path d="M12 3l2.2 4.6L19 8l-3.5 3.4L16.3 16 12 13.7 7.7 16l.8-4.6L5 8l4.8-.4z"/></svg><span class="dot"></span></span>プラス</button>
+          <button onclick="toast('IC残高: 1,280円（デモ）')"><span class="ti-ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M13 9h5M13 12.5h5"/><circle cx="8.5" cy="11" r="2"/></svg></span>IC残高</button>
+          <button onclick="toast('交通マップを開きます（デモ）')"><span class="ti-ic"><svg viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg></span>交通マップ</button>
+        </div>
+      </div>
+      <div class="scroll">
+        <!-- ルート検索 -->
+        <div id="searchPane0">
+          <div class="formwrap">
+            <div class="fld"><span class="lbl">出発</span><input id="fromInput" value="柿生" placeholder="出発地を入力"></div>
+            <div class="midrow">
+              <button class="viabtn" onclick="addVia()">＋ 経由</button>
+              <div class="midbtns">
+                <button class="circ" onclick="voiceInput()"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0012 0M12 17v3"/></svg></button>
+                <button class="circ" onclick="swapStations()"><svg viewBox="0 0 24 24"><path d="M8 4v14M8 4L5 7M8 4l3 3M16 20V6M16 20l-3-3M16 20l3-3"/></svg></button>
+              </div>
+            </div>
+            <div id="viaWrap"></div>
+            <div class="fld"><span class="lbl">到着</span><input id="toInput" value="飯田橋" placeholder="到着地を入力"></div>
+          </div>
+          <button class="datetime" onclick="openDateTime()">
+            <span class="dt-clock"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span>
+            <span id="dtLabel">現在時刻</span>
+            <span class="dt-right">日時 ▼</span>
+          </button>
+          <div class="condbar">
+            <button id="cond-speed" onclick="cycleCond('speed',this)"><span class="cic"><svg viewBox="0 0 24 24"><circle cx="14" cy="5" r="2"/><path d="M13 8l-4 3 1 4-3 4M13 11l3 2 3-1M9 11L5 9"/></svg></span><span class="t">少し急いで</span></button>
+            <button id="cond-fare" onclick="cycleCond('fare',this)"><span class="cic"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M13 10h5M13 13.5h5"/><circle cx="8.5" cy="12" r="2"/></svg></span><span class="t">IC優先</span></button>
+            <button id="cond-seat" onclick="cycleCond('seat',this)"><span class="cic"><span class="cbox">自</span></span><span class="t">自由席</span></button>
+            <button id="cond-pass" class="dis" onclick="cycleCond('pass',this)"><span class="cic"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M5 7l14 10"/></svg></span><span class="t">定期なし</span></button>
+            <button id="cond-desig" onclick="cycleCond('desig',this)"><span class="cic"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M8 7h8M8 11h8"/><path d="M8 18l-2 3M16 18l2 3"/></svg></span><span class="t">指定あり</span></button>
+            <button onclick="openConditions()"><span class="cic" style="font-size:13px;color:#6e6e73">検索<br>条件</span><span class="t">▼</span></button>
+          </div>
+          <button class="searchbtn" onclick="doSearch()">検索</button>
+        </div>
+        <!-- 最寄駅検索 -->
+        <div id="searchPane1" style="display:none">
+          <div class="formwrap">
+            <div class="fld"><span class="lbl" style="background:#3186f0">地点</span><input id="nearInput" placeholder="住所・施設名・現在地"></div>
+          </div>
+          <button class="datetime" onclick="useGeo()">
+            <span class="dt-clock"><svg viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-10.6A6.5 6.5 0 0112 4a6.5 6.5 0 016.5 6.4C18.5 15 12 21 12 21z"/><circle cx="12" cy="10.4" r="2.2"/></svg></span>
+            現在地から最寄駅を探す
+            <span class="dt-right">›</span>
+          </button>
+          <button class="searchbtn" onclick="doNearest()">検索</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 検索結果 : ルート詳細 ============ -->
+    <section class="screen" id="sc-result">
       <div class="routetabs">
-        <button class="back" onclick="toast('前の画面に戻ります')">‹</button>
+        <button class="back" onclick="backToSearch()">‹</button>
         <div class="nums" id="routeNums"></div>
         <span style="width:24px"></span>
       </div>
@@ -556,7 +651,91 @@ function openModal(title,html){
 function closeModal(){document.getElementById('overlay').classList.remove('show')}
 function closeAd(id){document.getElementById(id).style.display='none';toast('広告を閉じました')}
 
-/* ---------------- トップ: ルート ---------------- */
+/* ---------------- トップ: 検索フォーム ---------------- */
+function searchTab(i,btn){
+  document.querySelectorAll('.stabs button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('searchPane0').style.display=i===0?'block':'none';
+  document.getElementById('searchPane1').style.display=i===1?'block':'none';
+}
+let viaCount=0;
+function addVia(){
+  if(viaCount>=3){toast('経由は3駅まで指定できます');return;}
+  viaCount++;
+  const div=document.createElement('div');
+  div.className='viafld';
+  div.innerHTML=`<span class="vl">経由</span><input placeholder="経由地を入力"><button class="vx" onclick="this.parentNode.remove();viaCount--">✕</button>`;
+  document.getElementById('viaWrap').appendChild(div);
+  div.querySelector('input').focus();
+}
+function voiceInput(){toast('🎤 音声で入力できます（デモ）')}
+function swapStations(){
+  const f=document.getElementById('fromInput'),t=document.getElementById('toInput');
+  [f.value,t.value]=[t.value,f.value];
+  toast('出発と到着を入れ替えました');
+}
+const condOpts={
+  speed:['標準','少し急いで','急いで','ゆっくり'],
+  fare:['IC優先','きっぷ優先'],
+  seat:['自由席','指定席'],
+  pass:['定期なし','定期(柿生-新宿)'],
+  desig:['指定あり','指定なし']
+};
+function cycleCond(key,btn){
+  const arr=condOpts[key];
+  const cur=btn.querySelector('.t').textContent;
+  let idx=(arr.indexOf(cur)+1)%arr.length;
+  btn.querySelector('.t').textContent=arr[idx];
+  btn.classList.toggle('dis',key==='pass'&&idx===0);
+  toast(arr[idx]+' に設定しました');
+}
+function openConditions(){
+  openModal('検索条件',`
+    <div class="field"><label>表示順</label>
+      <select style="width:100%;padding:12px;border:1px solid #d0d0d5;border-radius:8px;font-size:16px;font-family:inherit">
+        <option>到着が早い順</option><option>乗換が少ない順</option><option>運賃が安い順</option></select></div>
+    <label class="lrow" style="margin-top:10px">特急・新幹線を使う<input type="checkbox" checked style="margin-left:auto;width:22px;height:22px;accent-color:var(--blue)"></label>
+    <label class="lrow">歩く速度を考慮<input type="checkbox" checked style="margin-left:auto;width:22px;height:22px;accent-color:var(--blue)"></label>
+    <button class="btn-orange" style="width:calc(100% - 32px);margin:18px 16px;border-radius:24px;font-size:16px" onclick="closeModal();toast('検索条件を保存しました')">この条件で検索</button>`);
+}
+function openDateTime(){
+  openModal('日時設定',['現在時刻','出発時刻を指定','到着時刻を指定','始発','終電'].map(o=>
+    `<button class="choice" onclick="setDateTime('${o}')">${o}</button>`).join(''));
+}
+function setDateTime(o){document.getElementById('dtLabel').textContent=o;closeModal();toast(o+' で検索します')}
+function useGeo(){
+  toast('現在地を取得しています…');
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      ()=>toast('現在地の最寄駅: 柿生駅（デモ）'),
+      ()=>toast('位置情報が取得できませんでした'));
+  }else toast('この端末では位置情報を利用できません');
+}
+function doNearest(){
+  const v=document.getElementById('nearInput').value||'現在地';
+  toast(`「${v}」周辺の最寄駅を表示します（デモ）`);
+}
+function doSearch(){
+  const from=document.getElementById('fromInput').value.trim()||'柿生';
+  const to=document.getElementById('toInput').value.trim()||'飯田橋';
+  curRoute=1;
+  renderRouteNums();renderSummary();renderTimeline(to);
+  showResult();
+  toast(`${from} → ${to} の検索結果（${routes.length}件）`);
+}
+function showResult(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sc-result').classList.add('active');
+  document.querySelectorAll('#tabbar button').forEach(b=>b.classList.remove('on'));
+  document.querySelector('#tabbar button').classList.add('on');
+  document.querySelector('#sc-result .scroll').scrollTop=0;
+}
+function backToSearch(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sc-top').classList.add('active');
+}
+
+/* ---------------- 結果: ルート ---------------- */
 const routes=[
   {dep:'13:48',arr:'14:46',min:58,fare:'472円',trans:'乗換3回',km:'30.1km',tag:null},
   {dep:'13:52',arr:'14:43',min:51,fare:'523円',trans:'乗換2回',km:'29.4km',tag:'haya'},
@@ -584,7 +763,9 @@ function renderSummary(){
   sumMin.textContent=`(${r.min}分)`;
   sumFare.textContent=r.fare;sumTrans.textContent=r.trans;sumKm.textContent=r.km;
 }
-function renderTimeline(){
+let destStation='田原町(東京都)';
+function renderTimeline(dest){
+  destStation=dest||destStation;
   document.getElementById('timeline').innerHTML=`
   <div class="tl-station">
     <span class="t">13:52</span>
@@ -662,8 +843,8 @@ function renderTimeline(){
   <div class="tl-station">
     <span class="t">14:43</span>
     <span class="mark"><span class="badge-dep">着</span></span>
-    <span class="name">田原町(東京都) <span class="sticon">ⅲ</span></span>
-    <span class="weather" onclick="toast('田原町周辺の天気: くもり 25℃（デモ）')">☁️</span>
+    <span class="name">${destStation} <span class="sticon">ⅲ</span></span>
+    <span class="weather" onclick="toast('到着地周辺の天気: くもり 25℃（デモ）')">☁️</span>
   </div>`;
 }
 function toggleStops(id,btn){
@@ -673,7 +854,7 @@ function toggleStops(id,btn){
 }
 function shareRoute(){
   const r=routes[curRoute];
-  const text=`柿生→田原町(東京都) ${r.dep}→${r.arr}（${r.min}分・${r.fare}）`;
+  const text=`柿生→${destStation} ${r.dep}→${r.arr}（${r.min}分・${r.fare}）`;
   if(navigator.share){navigator.share({title:'乗換案内ルート',text}).catch(()=>{});}
   else{toast('共有: '+text);}
 }
@@ -711,7 +892,11 @@ function renderMemos(){
     `<button class="lrow" onclick="openRoute()">📌 ${m}<span class="chev">›</span></button>`).join('')+'</div>':'';
 }
 function openRoute(){
-  go('top',document.querySelector('#tabbar button'));
+  document.getElementById('fromInput').value='柿生';
+  document.getElementById('toInput').value='田原町(東京都)';
+  curRoute=1;
+  renderRouteNums();renderSummary();renderTimeline('田原町(東京都)');
+  showResult();
   toast('柿生→田原町(東京都)のルートを表示します');
 }
 function regPlace(name){
