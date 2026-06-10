@@ -4,155 +4,165 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RHC（Recruit Health Consulting） 運営入力</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
   :root{
-    /* 淡い水色・白・オレンジ基調のパレット */
-    --bg:#eef7fc; --bg-tint:#e4f1fa; --surface:#ffffff; --surface-2:#f6fbfe; --field:#ffffff;
-    --line:#e1edf5; --line-2:#d2e3ef;
-    --txt:#2b3b4a; --sub:#647b8e; --muted:#9bb1c2;
-    /* メイン=水色 / サブCTA=オレンジ */
-    --sky:#2cb4e6; --sky-press:#199fcf; --sky-soft:#e2f4fb;
-    --orange:#ff9f43; --orange-press:#f5871f; --orange-soft:#fff2e2;
+    /* くすませた水色・白・オレンジ — 静かで実務的なトーン */
+    --bg:#f4f6f8; --bg-tint:#eceff3; --surface:#ffffff; --surface-2:#fafbfc; --field:#ffffff;
+    --line:#e6e9ee; --line-2:#dadfe6;
+    --txt:#22303c; --sub:#62717e; --muted:#9aa7b2;
+    /* メイン=くすみ水色 / 差し色=くすみオレンジ */
+    --sky:#4f86ad; --sky-press:#3f7396; --sky-soft:#eaf1f6; --sky-line:#cfe0eb;
+    --orange:#e8945a; --orange-press:#d97e3f; --orange-soft:#fbf0e6; --orange-line:#f1d9c2;
     --accent:var(--sky); --accent-soft:var(--sky-soft); --accent-press:var(--sky-press);
-    --ok:#ff9f43; --ok-soft:#fff2e2; --warn:#f0686a;
-    --radius:16px; --radius-sm:10px;
-    --shadow:0 1px 2px rgba(38,118,166,.05),0 6px 18px rgba(38,118,166,.07);
-    --shadow-lg:0 18px 44px rgba(38,118,166,.18);
+    --ok:var(--orange); --ok-soft:var(--orange-soft); --warn:#d96a6a;
+    --radius:13px; --radius-sm:9px;
+    --font:"Plus Jakarta Sans","Zen Kaku Gothic New",-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic UI","Noto Sans JP","Meiryo",sans-serif;
+    --shadow:0 1px 2px rgba(28,45,61,.04),0 2px 8px rgba(28,45,61,.05);
+    --shadow-lg:0 12px 32px rgba(28,45,61,.13);
   }
   *{box-sizing:border-box}
   html,body{height:100%}
-  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP","Meiryo",sans-serif;
-    background:
-      radial-gradient(1200px 600px at 78% -8%, rgba(255,159,67,.10), transparent 60%),
-      radial-gradient(1000px 560px at -6% 0%, rgba(44,180,230,.16), transparent 58%),
-      var(--bg);
-    color:var(--txt);display:flex;min-height:100vh;-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.55}
+  body{margin:0;font-family:var(--font);
+    background:var(--bg);
+    background-image:radial-gradient(circle at 1px 1px, rgba(34,48,60,.022) 1px, transparent 0);
+    background-size:22px 22px;
+    color:var(--txt);display:flex;min-height:100vh;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-size:14px;line-height:1.55}
   /* サイドバー */
-  .side{width:256px;background:linear-gradient(180deg,#ffffff,#f4fbfe);border-right:1px solid var(--line);
-    padding:22px 16px;flex-shrink:0;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
-  .brand{font-weight:800;font-size:16px;padding:6px 8px 22px;letter-spacing:.2px;color:var(--txt);
-    display:flex;align-items:center;gap:11px;line-height:1.3}
-  .brand .logo{width:34px;height:34px;border-radius:11px;flex-shrink:0;
-    background:linear-gradient(135deg,var(--sky),#7fd4f2 55%,var(--orange));
-    box-shadow:0 4px 12px rgba(44,180,230,.4);position:relative}
-  .brand .logo::after{content:"";position:absolute;inset:7px;border-radius:6px;background:rgba(255,255,255,.85)}
-  .brand small{display:block;color:var(--muted);font-weight:600;font-size:11px;margin-top:3px;letter-spacing:.4px;text-transform:uppercase}
+  .side{width:248px;background:var(--surface);border-right:1px solid var(--line);
+    padding:20px 14px;flex-shrink:0;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+  .brand{font-weight:800;font-size:15.5px;padding:6px 8px 20px;letter-spacing:-.01em;color:var(--txt);
+    display:flex;align-items:center;gap:11px;line-height:1.25}
+  .brand .logo{width:32px;height:32px;border-radius:9px;flex-shrink:0;background:var(--sky);position:relative;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+  .brand .logo::before{content:"";position:absolute;left:8px;top:8px;width:9px;height:9px;border-radius:2px;background:#fff;opacity:.92}
+  .brand .logo::after{content:"";position:absolute;right:7px;bottom:7px;width:8px;height:8px;border-radius:2px;background:var(--orange)}
+  .brand small{display:block;color:var(--muted);font-weight:600;font-size:10.5px;margin-top:3px;letter-spacing:.5px;text-transform:uppercase}
+  .navlabel{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:4px 12px 8px}
   .nav button{display:flex;align-items:center;gap:11px;width:100%;text-align:left;
-    background:none;border:none;color:var(--sub);padding:11px 13px;border-radius:12px;
-    font-size:14px;cursor:pointer;margin-bottom:3px;transition:background .14s,color .14s,transform .08s;position:relative}
-  .nav button:hover{background:var(--sky-soft);color:var(--sky-press)}
-  .nav button.active{background:linear-gradient(135deg,var(--sky),#54c6ef);color:#fff;font-weight:700;
-    box-shadow:0 6px 16px rgba(44,180,230,.34)}
+    background:none;border:none;color:var(--sub);padding:10px 12px;border-radius:9px;
+    font-size:13.5px;font-weight:600;font-family:inherit;cursor:pointer;margin-bottom:1px;transition:background .13s,color .13s;position:relative}
+  .nav button:hover{background:var(--bg);color:var(--txt)}
+  .nav button.active{background:var(--sky-soft);color:var(--sky-press);font-weight:700}
+  .nav button.active::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--orange)}
   .nav button.active .ico{opacity:1}
-  .nav .ico{width:18px;text-align:center;font-size:15px;opacity:.85}
-  .side .hint{margin-top:auto;font-size:11.5px;color:var(--sub);background:var(--orange-soft);
-    padding:13px;border-radius:12px;line-height:1.65;border:1px solid #ffe1bf}
+  .nav .ico{width:18px;text-align:center;font-size:15px;opacity:.7}
+  .side .hint{margin-top:auto;font-size:11.5px;color:var(--sub);background:var(--bg);
+    padding:13px;border-radius:11px;line-height:1.65;border:1px solid var(--line)}
+  .side .hint b{color:var(--orange-press)}
   /* メイン（中央寄せ・左右均等の余白） */
-  .main{flex:1;padding:46px 48px 90px;display:flex;flex-direction:column;align-items:center}
-  .main>*{width:100%;max-width:840px}
-  h1{font-size:23px;font-weight:800;margin:0 0 5px;letter-spacing:-.02em}
-  .lead{color:var(--sub);font-size:13.5px;margin:0 0 26px}
+  .main{flex:1;padding:40px 48px 88px;display:flex;flex-direction:column;align-items:center}
+  .main>*{width:100%;max-width:860px}
+  h1{font-size:22px;font-weight:800;margin:0 0 6px;letter-spacing:-.025em;display:flex;align-items:center;gap:11px}
+  h1::before{content:"";width:5px;height:21px;border-radius:3px;background:var(--sky);flex-shrink:0}
+  .lead{color:var(--sub);font-size:13px;margin:0 0 26px;line-height:1.6}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
-    padding:26px 28px;margin-bottom:20px;box-shadow:var(--shadow)}
-  .card h2{font-size:15.5px;font-weight:750;margin:0 0 5px;display:flex;align-items:center;gap:9px}
+    padding:24px 26px;margin-bottom:18px;box-shadow:var(--shadow)}
+  .card h2{font-size:15px;font-weight:700;margin:0 0 5px;display:flex;align-items:center;gap:9px;letter-spacing:-.01em}
   .card .desc{color:var(--sub);font-size:12.5px;margin:0 0 20px;line-height:1.65}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 18px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:15px 18px}
   .field{display:flex;flex-direction:column;gap:6px}
   .field.full{grid-column:1/-1}
-  label{font-size:12.5px;color:var(--sub);font-weight:600}
-  label .req{color:var(--orange-press);margin-left:2px}
+  label{font-size:12px;color:var(--sub);font-weight:600;letter-spacing:.01em}
+  label .req{color:var(--orange-press);margin-left:2px;font-weight:800}
   input,select,textarea{background:var(--field);border:1px solid var(--line-2);color:var(--txt);
-    padding:10px 13px;border-radius:var(--radius-sm);font-size:14px;font-family:inherit;width:100%;transition:border-color .14s,box-shadow .14s,background .14s}
+    padding:10px 12px;border-radius:var(--radius-sm);font-size:13.5px;font-family:inherit;width:100%;transition:border-color .13s,box-shadow .13s}
   input::placeholder,textarea::placeholder{color:var(--muted)}
-  input:hover,select:hover,textarea:hover{border-color:#bcd9ea}
-  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--sky);background:#fbfeff;box-shadow:0 0 0 4px var(--sky-soft)}
-  select{appearance:none;background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%232cb4e6' d='M6 8 0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px}
-  textarea{resize:vertical;min-height:64px}
-  .actions{display:flex;align-items:center;gap:12px;margin-top:24px}
-  .btn{background:linear-gradient(135deg,var(--sky),#4cc4ee);color:#fff;border:none;padding:11px 24px;border-radius:var(--radius-sm);
-    font-size:14px;font-weight:700;cursor:pointer;transition:filter .14s,transform .06s,box-shadow .14s;
-    box-shadow:0 6px 16px rgba(44,180,230,.30)}
-  .btn:hover{filter:brightness(1.04);box-shadow:0 9px 22px rgba(44,180,230,.40);transform:translateY(-1px)}
-  .btn:active{transform:translateY(0)}
-  .btn:disabled{opacity:.5;cursor:default;box-shadow:none;transform:none;filter:none}
-  /* オレンジの強調CTA（任意で data-cta やクラスに付与可能） */
-  .btn.cta{background:linear-gradient(135deg,var(--orange),#ffb869);box-shadow:0 6px 16px rgba(255,159,67,.36)}
-  .btn.cta:hover{box-shadow:0 9px 22px rgba(255,159,67,.46)}
-  .btn.ghost{background:var(--surface);color:var(--sky-press);border:1px solid var(--line-2);box-shadow:none;font-weight:600}
-  .btn.ghost:hover{background:var(--sky-soft);border-color:#bcd9ea;filter:none;transform:none}
+  input:hover,select:hover,textarea:hover{border-color:#c3cdd7}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--sky);box-shadow:0 0 0 3px var(--sky-soft)}
+  select{appearance:none;background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2362717e' d='M6 8 0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+  textarea{resize:vertical;min-height:62px}
+  .actions{display:flex;align-items:center;gap:10px;margin-top:22px}
+  .btn{background:var(--sky);color:#fff;border:none;padding:10px 20px;border-radius:var(--radius-sm);
+    font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer;transition:background .13s,box-shadow .13s,transform .05s;
+    box-shadow:0 1px 2px rgba(28,45,61,.10)}
+  .btn:hover{background:var(--sky-press);box-shadow:0 4px 12px rgba(63,115,150,.28)}
+  .btn:active{transform:translateY(1px)}
+  .btn:disabled{opacity:.5;cursor:default;box-shadow:none;transform:none}
+  /* オレンジの強調CTA */
+  .btn.cta{background:var(--orange)}
+  .btn.cta:hover{background:var(--orange-press);box-shadow:0 4px 12px rgba(217,126,63,.30)}
+  .btn.ghost{background:var(--surface);color:var(--sub);border:1px solid var(--line-2);box-shadow:none;font-weight:600}
+  .btn.ghost:hover{background:var(--bg);color:var(--txt);border-color:#c3cdd7}
   .page{display:none}
-  .page.active{display:block;animation:fade .26s ease}
-  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .page.active{display:block;animation:fade .28s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+  .card,.picker{animation:fade .34s ease both}
+  .page.active .card:nth-child(2){animation-delay:.04s}
+  .page.active .card:nth-child(3){animation-delay:.08s}
   /* モード切替（セグメント） */
-  .modebar{display:inline-flex;background:var(--bg-tint);border-radius:12px;padding:4px;margin:0 0 22px;gap:3px;border:1px solid var(--line)}
-  .seg{background:none;border:none;color:var(--sub);padding:9px 22px;border-radius:9px;font-size:13.5px;
-    cursor:pointer;font-weight:700;transition:.14s}
-  .seg:hover{color:var(--sky-press)}
-  .seg.active{background:var(--surface);color:var(--sky-press);box-shadow:0 3px 10px rgba(38,118,166,.12)}
+  .modebar{display:inline-flex;background:var(--bg-tint);border-radius:10px;padding:3px;margin:0 0 22px;gap:2px}
+  .seg{background:none;border:none;color:var(--sub);padding:8px 20px;border-radius:7px;font-size:13px;font-family:inherit;
+    cursor:pointer;font-weight:700;transition:.13s}
+  .seg:hover{color:var(--txt)}
+  .seg.active{background:var(--surface);color:var(--sky-press);box-shadow:0 1px 3px rgba(28,45,61,.12)}
   /* ピッカー */
-  .picker{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px;box-shadow:var(--shadow)}
-  .picker .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;flex-wrap:wrap}
-  .picker .head b{font-size:14px;font-weight:750}
+  .picker{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:18px;box-shadow:var(--shadow)}
+  .picker .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px;flex-wrap:wrap}
+  .picker .head b{font-size:13.5px;font-weight:700}
   .recs{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
-  .recs th{text-align:left;color:var(--muted);font-weight:700;font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:7px 12px;border-bottom:1px solid var(--line)}
-  .recs td{padding:12px;border-bottom:1px solid var(--line);color:var(--txt)}
+  .recs th{text-align:left;color:var(--muted);font-weight:700;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;padding:6px 12px;border-bottom:1px solid var(--line)}
+  .recs td{padding:11px 12px;border-bottom:1px solid var(--line);color:var(--txt)}
   .recs tbody tr{cursor:pointer;transition:background .12s}
   .recs tbody tr:last-child td{border-bottom:none}
-  .recs tbody tr:hover{background:var(--sky-soft)}
-  .recs .pill{font-size:11px;font-weight:600;padding:4px 11px;border-radius:20px;background:var(--sky-soft);border:1px solid #c4e8f6;color:var(--sky-press)}
+  .recs tbody tr:hover{background:var(--surface-2)}
+  .recs .pill{font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;background:var(--sky-soft);border:1px solid var(--sky-line);color:var(--sky-press)}
   .recs .empty{color:var(--muted);text-align:center;padding:24px}
-  .editbanner{background:var(--orange-soft);border:1px solid #ffdcb3;color:var(--orange-press);
-    border-radius:var(--radius-sm);padding:10px 15px;font-size:12.5px;font-weight:700;margin-bottom:18px}
+  .editbanner{background:var(--orange-soft);border:1px solid var(--orange-line);color:var(--orange-press);
+    border-radius:var(--radius-sm);padding:10px 14px;font-size:12.5px;font-weight:700;margin-bottom:18px}
   [hidden]{display:none !important}
   /* トースト */
   #toast{position:fixed;right:24px;bottom:24px;display:flex;flex-direction:column;gap:10px;z-index:99}
-  .toast{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--sky);
-    padding:14px 18px;border-radius:var(--radius-sm);font-size:13.5px;min-width:240px;box-shadow:var(--shadow-lg);
+  .toast{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--sky);
+    padding:13px 17px;border-radius:var(--radius-sm);font-size:13px;min-width:240px;box-shadow:var(--shadow-lg);
     animation:slide .24s ease;color:var(--txt);font-weight:600}
   .toast.err{border-left-color:var(--warn)}
   @keyframes slide{from{transform:translateX(18px);opacity:0}to{transform:none;opacity:1}}
-  .urlbar{font-size:12px;color:var(--sub);margin-bottom:22px;padding:10px 15px;background:var(--surface);
-    border:1px solid var(--line);border-radius:var(--radius-sm);display:flex;align-items:center;gap:9px;box-shadow:var(--shadow)}
-  .dot{width:8px;height:8px;border-radius:50%;background:var(--warn);flex-shrink:0;box-shadow:0 0 0 3px rgba(240,104,106,.18)}
-  .dot.ok{background:var(--sky);box-shadow:0 0 0 3px var(--sky-soft)}
-  @media(max-width:720px){.side{width:62px;padding:16px 8px}.brand small,.nav button span:not(.ico),.side .hint{display:none}.brand{justify-content:center}.main{padding:28px 18px}}
+  /* 接続ステータス: 右上の控えめなチップ */
+  .urlbar{align-self:flex-end;width:auto;font-size:11.5px;color:var(--sub);margin:0 0 18px;padding:6px 12px;background:var(--surface);
+    border:1px solid var(--line);border-radius:20px;display:inline-flex;align-items:center;gap:8px;box-shadow:var(--shadow)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--warn);flex-shrink:0;box-shadow:0 0 0 3px rgba(217,106,106,.16)}
+  .dot.ok{background:#5bb88a;box-shadow:0 0 0 3px rgba(91,184,138,.16)}
+  @media(max-width:720px){.side{width:60px;padding:16px 7px}.brand small,.navlabel,.nav button span:not(.ico),.side .hint{display:none}.brand{justify-content:center;gap:0}.main{padding:26px 18px}.urlbar{align-self:stretch;justify-content:center}}
   /* 進行管理: フェーズステッパー */
-  .stepper{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
-  .step{flex:1;min-width:120px;background:var(--bg-tint);border:1px solid var(--line-2);border-radius:12px;
-    padding:10px;cursor:pointer;text-align:center;transition:.14s;position:relative}
-  .step:hover{border-color:var(--sky);color:var(--sky-press);transform:translateY(-1px)}
-  .step .n{display:block;font-size:11px;color:var(--muted);font-weight:700}
-  .step .nm{font-size:12.5px;font-weight:700}
-  .step.done{background:var(--orange-soft);border-color:#ffdcb3;color:var(--orange-press)}
-  .step.done .n{color:#f0a868}
-  .step.current{background:linear-gradient(135deg,var(--sky),#54c6ef);border-color:var(--sky);color:#fff;
-    box-shadow:0 6px 16px rgba(44,180,230,.34)}
-  .step.current .n{color:#dcf3fc}
+  .stepper{display:flex;flex-wrap:wrap;gap:7px;margin-top:18px}
+  .step{flex:1;min-width:118px;background:var(--bg);border:1px solid var(--line-2);border-radius:9px;
+    padding:9px 10px;cursor:pointer;text-align:center;transition:.13s;position:relative}
+  .step:hover{border-color:var(--sky);color:var(--sky-press)}
+  .step .n{display:block;font-size:10.5px;color:var(--muted);font-weight:700}
+  .step .nm{font-size:12px;font-weight:700}
+  .step.done{background:var(--orange-soft);border-color:var(--orange-line);color:var(--orange-press)}
+  .step.done .n{color:#cf9a6e}
+  .step.current{background:var(--sky);border-color:var(--sky);color:#fff;box-shadow:0 3px 10px rgba(63,115,150,.30)}
+  .step.current .n{color:#d6e6f0}
   /* 進行管理: To Doカード */
-  .todocard{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--sky);
-    border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;box-shadow:var(--shadow);transition:box-shadow .14s}
+  .todocard{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--sky);
+    border-radius:var(--radius);padding:17px 19px;margin-bottom:13px;box-shadow:var(--shadow);transition:box-shadow .13s,border-color .13s}
   .todocard:hover{box-shadow:var(--shadow-lg)}
-  .todocard.done{border-left-color:var(--orange);background:linear-gradient(180deg,#fffaf3,#ffffff);opacity:.92}
-  .todocard h3{margin:0 0 4px;font-size:14.5px;font-weight:750;display:flex;align-items:center;gap:8px}
+  .todocard.done{border-left-color:var(--orange);background:var(--surface-2);opacity:.95}
+  .todocard h3{margin:0 0 4px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
   .todocard .tdesc{color:var(--sub);font-size:12.5px;margin:0 0 12px;line-height:1.65}
   .todocard .links{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
-  .todocard .reflink{font-size:12px;font-weight:600;padding:7px 13px;border-radius:20px;background:var(--sky-soft);
-    color:var(--sky-press);text-decoration:none;border:1px solid #c4e8f6}
-  .todocard .reflink:hover{background:#d2eefa}
+  .todocard .reflink{font-size:12px;font-weight:600;padding:6px 12px;border-radius:7px;background:var(--sky-soft);
+    color:var(--sky-press);text-decoration:none;border:1px solid var(--sky-line)}
+  .todocard .reflink:hover{background:#dfeaf2}
   .todocard .memo{display:flex;gap:8px;align-items:center;margin-bottom:6px}
   .todocard .memo input{flex:1}
   .todocard .donebadge{font-size:11px;color:var(--orange-press);font-weight:800}
   .todocard .doneat{font-size:11px;color:var(--muted);margin-left:6px}
-  .phasehdr{font-size:13px;font-weight:800;color:var(--sub);margin:6px 2px 12px;letter-spacing:.02em}
-  .recs td .miniact{font-size:11.5px;padding:6px 13px;border-radius:20px;background:linear-gradient(135deg,var(--orange),#ffb869);color:#fff;
-    border:none;cursor:pointer;font-weight:700;white-space:nowrap;box-shadow:0 4px 10px rgba(255,159,67,.32)}
-  .recs td .miniact:hover{filter:brightness(1.04);box-shadow:0 6px 14px rgba(255,159,67,.42)}
-  code{background:var(--sky-soft);color:var(--sky-press);padding:2px 6px;border-radius:6px;font-size:12px}
+  .phasehdr{font-size:12.5px;font-weight:800;color:var(--sub);margin:6px 2px 12px;letter-spacing:.02em}
+  .recs td .miniact{font-size:11.5px;padding:6px 12px;border-radius:7px;background:var(--orange);color:#fff;
+    border:none;cursor:pointer;font-weight:700;font-family:inherit;white-space:nowrap;box-shadow:0 1px 2px rgba(28,45,61,.10);transition:background .13s}
+  .recs td .miniact:hover{background:var(--orange-press)}
+  code{background:var(--bg-tint);color:var(--sky-press);padding:2px 6px;border-radius:5px;font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 </style>
 </head>
 <body>
   <aside class="side">
     <div class="brand"><span class="logo"></span><span>RHC<small>運営 入力コンソール</small></span></div>
+    <div class="navlabel">メニュー</div>
     <nav class="nav">
       <button data-page="meeting" class="active"><span class="ico">📅</span>説明会会議管理</button>
       <button data-page="deal"><span class="ico">🤝</span>商談リスト</button>
