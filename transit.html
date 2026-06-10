@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>乗換案内</title>
+<style>
+:root{
+  --blue:#1a6eeb;
+  --blue-dark:#0c5cd6;
+  --orange:#f9a13a;
+  --teal:#17a398;
+  --red:#e8453c;
+  --bg:#f2f2f4;
+  --line:#e2e2e6;
+  --txt:#1c1c1e;
+  --gray:#8e8e93;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+  background:#444;color:var(--txt);
+  display:flex;justify-content:center;
+}
+#phone{
+  width:100%;max-width:430px;height:100dvh;background:var(--bg);
+  display:flex;flex-direction:column;position:relative;overflow:hidden;
+}
+/* ===== status bar ===== */
+.statusbar{
+  flex:none;display:flex;justify-content:space-between;align-items:center;
+  padding:10px 22px 4px;background:#fff;font-weight:700;font-size:16px;
+}
+.statusbar .right{display:flex;align-items:center;gap:6px}
+.sig{display:flex;align-items:flex-end;gap:1.5px;height:11px}
+.sig i{width:3px;background:#1c1c1e;border-radius:1px;display:block}
+.sig i:nth-child(1){height:4px}.sig i:nth-child(2){height:6px}
+.sig i:nth-child(3){height:8px;background:#c7c7cc}.sig i:nth-child(4){height:11px;background:#c7c7cc}
+.batt{width:27px;height:13px;border:1.5px solid #1c1c1e;border-radius:4px;position:relative;display:flex;align-items:center;padding:1.5px}
+.batt::after{content:"";position:absolute;right:-4px;top:3.5px;width:2px;height:5px;background:#1c1c1e;border-radius:0 2px 2px 0}
+.batt b{display:block;height:100%;width:100%;background:#34c759;border-radius:2px}
+/* ===== screens ===== */
+main{flex:1;overflow:hidden;position:relative}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;overflow:hidden}
+.screen.active{display:flex}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.appbar{
+  flex:none;background:#fff;display:flex;align-items:center;justify-content:center;
+  position:relative;padding:8px 16px 12px;min-height:44px;
+}
+.appbar h1{font-size:18px;font-weight:700}
+.appbar .left,.appbar .rightbtn{position:absolute;top:50%;transform:translateY(-50%);font-size:16px;background:none;border:none;font-family:inherit;cursor:pointer}
+.appbar .left{left:12px}
+.appbar .rightbtn{right:16px;color:var(--blue);font-weight:600}
+.appbar .rightbtn.disabled{color:#b8b8bd}
+/* ===== segmented tabs (mypage/timetable) ===== */
+.segtabs{flex:none;display:flex;background:#f7f7f8;border-bottom:3px solid #d8d8dc}
+.segtabs button{
+  flex:1;border:none;background:transparent;font-family:inherit;font-size:15px;font-weight:600;
+  color:#555;padding:13px 4px;position:relative;cursor:pointer;border-left:1px solid var(--line);
+}
+.segtabs button:first-child{border-left:none}
+.segtabs button.on{background:#fff;color:var(--blue)}
+.segtabs button.on::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:3px;background:var(--blue)}
+/* ===== search bar ===== */
+.searchwrap{flex:none;background:#fff;padding:10px 14px;border-bottom:1px solid var(--line)}
+.searchbar{
+  display:flex;align-items:center;gap:8px;background:#d9d9de;border-radius:10px;padding:11px 14px;
+}
+.searchbar svg{flex:none}
+.searchbar input{flex:1;border:none;background:transparent;font-size:17px;font-family:inherit;outline:none;color:var(--txt)}
+.searchbar input::placeholder{color:#74747b}
+/* ===== ad banner ===== */
+.ad{background:#fff;border-bottom:1px solid var(--line);padding:8px 12px;position:relative}
+.ad .adlabel{position:absolute;top:4px;right:10px;font-size:11px;color:#9a9aa0;display:flex;gap:6px;align-items:center}
+.ad .adlabel button{border:none;background:none;font-size:13px;color:#9a9aa0;cursor:pointer}
+.ad .adbody{display:flex;gap:10px;align-items:center;margin-top:10px}
+.ad .adimg{flex:none;width:64px;height:48px;border-radius:6px;background:linear-gradient(135deg,#d72c16,#f7b32b);display:flex;align-items:center;justify-content:center;font-size:26px}
+.ad .adtxt b{display:block;font-size:14px;color:var(--blue);font-weight:700}
+.ad .adtxt span{font-size:12px;color:#6e6e73}
+/* ===== bottom tabbar ===== */
+.tabbar{
+  flex:none;display:flex;background:#fff;border-top:1px solid var(--line);
+  padding:6px 4px calc(env(safe-area-inset-bottom,8px) + 6px);
+}
+.tabbar button{
+  flex:1;border:none;background:none;font-family:inherit;display:flex;flex-direction:column;
+  align-items:center;gap:3px;font-size:11px;color:#3a3a3f;cursor:pointer;padding:2px 0;
+}
+.tabbar button svg{width:26px;height:26px;stroke:#3a3a3f;fill:none;stroke-width:1.8}
+.tabbar button.on{color:var(--blue)}
+.tabbar button.on svg{stroke:var(--blue)}
+.tabbar button.on svg .fillme{fill:var(--blue)}
+/* ===== TOP: route header ===== */
+.routetabs{flex:none;background:#fff;display:flex;align-items:center;padding:6px 8px 10px;gap:4px}
+.routetabs .back{border:none;background:none;font-size:24px;color:#1c1c1e;padding:0 8px;cursor:pointer}
+.routetabs .nums{flex:1;display:flex;justify-content:center;gap:16px}
+.rnum{position:relative;border:none;background:none;font-family:inherit;font-size:17px;color:#9a9aa0;font-weight:600;width:34px;height:34px;border-radius:50%;cursor:pointer}
+.rnum.on{background:#fff;color:var(--txt);box-shadow:0 0 0 2px var(--txt) inset;font-weight:700}
+.rnum .tag{position:absolute;top:-4px;right:-7px;font-size:9px;color:#fff;border-radius:50%;width:15px;height:15px;line-height:15px;font-weight:700}
+.tag.haya{background:var(--red)}.tag.raku{background:#2f7df6}.tag.yasu{background:var(--orange)}
+.summary{background:#fff;padding:12px 16px 4px;border-top:1px solid var(--line)}
+.summary .times{display:flex;align-items:baseline;gap:6px}
+.summary .times b{font-size:26px;font-weight:700;letter-spacing:.5px}
+.summary .times .min{font-size:15px;font-weight:600}
+.summary .times .date{margin-left:auto;font-size:14px;color:#3a3a3f}
+.summary .meta{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:14px;color:#3a3a3f}
+.icbadge{font-size:11px;border:1px solid #9a9aa0;color:#6e6e73;border-radius:3px;padding:1px 4px}
+.actions{background:#fff;display:flex;padding:10px 6px 14px;border-bottom:8px solid var(--bg)}
+.actions button{
+  flex:1;border:none;background:none;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:6px;
+  font-size:11px;color:#3a3a3f;cursor:pointer;
+}
+.actions .ic{width:46px;height:46px;border-radius:50%;border:1px solid #d8d8dc;display:flex;align-items:center;justify-content:center;background:#fff}
+.actions .ic svg{width:22px;height:22px;stroke:#3a3a3f;fill:none;stroke-width:1.7}
+/* ===== timeline ===== */
+.timeline{background:#fff;padding:4px 0 20px}
+.tl-station{display:flex;align-items:center;padding:14px 16px 14px 12px;position:relative}
+.tl-station .t{width:56px;text-align:right;font-size:17px;font-weight:700;color:var(--blue)}
+.tl-station .t small{display:block;font-size:12px;color:#6e6e73;font-weight:600}
+.tl-station .mark{flex:none;width:30px;display:flex;justify-content:center}
+.badge-dep{background:#2c2c2e;color:#fff;font-size:11px;border-radius:3px;padding:2px 4px;font-weight:600}
+.tl-station .name{font-size:18px;font-weight:700;margin-left:4px;display:flex;align-items:center;gap:6px}
+.tl-station .name .sticon{color:#b0b0b6;font-size:13px;letter-spacing:1px}
+.tl-station .weather{margin-left:auto;font-size:20px;color:#9a9aa0}
+.tl-seg{position:relative;margin-left:78px;border-left:5px solid #2f7df6;padding:6px 16px 16px 22px}
+.tl-seg .stops{
+  position:absolute;left:-2px;top:34px;transform:translateX(-50%);
+  background:#fff;border:1.5px solid #2f7df6;color:var(--blue);font-size:13px;font-weight:700;
+  border-radius:14px;padding:5px 9px;white-space:nowrap;cursor:pointer;font-family:inherit;
+}
+.tl-seg .linehead{display:flex;align-items:flex-start;gap:8px}
+.lmark{flex:none;width:26px;height:26px;border-radius:6px;background:#2f7df6;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #1c5ec9}
+.tl-seg .linehead .ln b{display:block;font-size:15px;font-weight:700}
+.tl-seg .linehead .ln span{font-size:13px;color:#6e6e73}
+.fare{margin-left:auto;flex:none;border:1.5px solid #2f7df6;color:var(--blue);font-weight:700;font-size:14px;border-radius:16px;padding:4px 12px;background:#fff}
+.payrow{display:flex;gap:8px;margin-top:12px;font-size:13px;align-items:flex-start}
+.paylabel{flex:none;background:#ececf0;color:#6e6e73;border-radius:3px;font-size:11px;padding:2px 5px;margin-top:1px}
+.payrow .pv b{color:var(--blue);font-weight:600;font-size:13.5px}
+.payrow .pv span{color:#3a3a3f}
+.payrow .pv small{display:block;color:#9a9aa0;font-size:11.5px;margin-top:2px}
+.platform{display:flex;gap:18px;margin-top:12px;font-size:14px;color:#3a3a3f;align-items:center}
+.platform .pn{display:inline-flex;align-items:center;gap:5px}
+.platform .num{background:#2c2c2e;color:#fff;border-radius:3px;font-size:12px;font-weight:700;padding:1px 6px}
+.congest{display:flex;align-items:center;gap:8px;margin-top:14px;border:none;background:none;font-family:inherit;font-size:14px;color:#3a3a3f;cursor:pointer;font-weight:600}
+.congest svg{width:18px;height:18px;stroke:#3a3a3f;fill:none;stroke-width:1.8}
+.congest::after{content:"›";color:#b0b0b6;font-size:18px}
+.tl-mid .mark::before{content:"";width:16px;height:16px;border:4px solid #2f7df6;background:#fff;border-radius:50%;display:block}
+.stopslist{margin:8px 0 0;padding:8px 0 0;border-top:1px dashed var(--line);display:none}
+.stopslist.open{display:block}
+.stopslist li{list-style:none;font-size:13px;color:#6e6e73;padding:4px 0;display:flex;gap:10px}
+.stopslist li b{color:#3a3a3f;font-weight:600;width:44px;text-align:right}
+/* ===== generic list ===== */
+.sechead{padding:18px 16px 8px;font-size:15px;font-weight:700;display:flex;align-items:center}
+.sechead .cnt{margin-left:auto;font-size:13px;color:#6e6e73;font-weight:500}
+.card{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.lrow{
+  width:100%;display:flex;align-items:center;gap:10px;padding:15px 16px;background:#fff;
+  border:none;border-bottom:1px solid var(--line);font-family:inherit;font-size:16px;text-align:left;cursor:pointer;color:var(--txt);
+}
+.lrow:last-child{border-bottom:none}
+.lrow .chev{margin-left:auto;color:#c0c0c6;font-size:20px}
+.lrow .stat{margin-left:auto;font-size:13px;color:#2da44e;font-weight:600}
+.lrow .stat.delay{color:#e07b00}
+/* ===== mypage ===== */
+.quickroutes{background:#fff;padding:14px 10px 18px;display:flex;border-bottom:8px solid var(--bg)}
+.quickroutes button{flex:1;border:none;background:none;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:7px;font-size:12px;color:#3a3a3f;cursor:pointer}
+.qicon{width:54px;height:54px;border-radius:50%;background:#3186f0;display:flex;align-items:center;justify-content:center;position:relative}
+.qicon svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:1.8}
+.qicon .plus{position:absolute;bottom:-2px;right:-2px;width:18px;height:18px;border-radius:50%;background:#fff;color:#3186f0;font-size:15px;font-weight:800;line-height:17px;text-align:center;box-shadow:0 0 0 1.5px #3186f0 inset}
+.tip{margin:0;background:#fdf3cf;display:flex;align-items:center;gap:8px;padding:10px 12px;font-size:13px;color:#6b5a16}
+.tip .key{background:#fff;border:1px solid #e3d289;border-radius:4px;padding:1px 6px;font-weight:700;font-size:12px}
+.tip button{margin-left:auto;border:none;background:none;font-size:16px;color:#b3a35a;cursor:pointer}
+.routeitem{display:flex;align-items:center;gap:12px;background:#fff;padding:16px;border-bottom:1px solid var(--line);width:100%;border-top:none;border-left:none;border-right:none;font-family:inherit;font-size:17px;font-weight:600;text-align:left;cursor:pointer;color:var(--txt)}
+.routeitem .swap{flex:none;color:var(--blue)}
+.routeitem .del{flex:none;width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;border:none;font-size:15px;font-weight:800;line-height:20px;cursor:pointer;display:none}
+.editmode .routeitem .del{display:block}
+.pluscard{margin:12px 14px 24px;background:#fff;border-radius:12px;border:1px solid var(--line);overflow:hidden;position:relative}
+.plusbadge{position:absolute;top:0;right:0;background:var(--teal);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:0 10px 0 10px}
+.pluscard .inner{padding:20px 18px}
+.pluscard h3{font-size:17px;margin-bottom:8px}
+.pluscard p{font-size:13px;color:#555;line-height:1.6}
+.mockshot{margin:14px auto 4px;background:#e9f6f0;border-radius:10px;padding:14px 12px;max-width:280px}
+.mockshot .mrow{display:flex;align-items:center;gap:8px;background:#fff;border-radius:8px;padding:8px 10px;font-size:12px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.mockshot .mtag{flex:none;font-size:10px;color:#fff;border-radius:3px;padding:2px 5px;font-weight:700}
+.btn-teal{display:block;width:calc(100% - 36px);margin:16px auto 18px;background:var(--teal);color:#fff;border:none;border-radius:24px;padding:13px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,.15)}
+.btn-orange{display:block;width:calc(100% - 72px);margin:18px auto;background:linear-gradient(#fbab43,#f59a26);color:#fff;border:none;border-radius:10px;padding:14px;font-size:19px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 3px 6px rgba(0,0,0,.18);letter-spacing:2px}
+.empty{padding:40px 24px;text-align:center;color:#8e8e93;font-size:14px;line-height:1.8}
+/* ===== timetable login ===== */
+.loginstate{padding:30px 0 10px;text-align:center}
+.bubble{
+  display:inline-block;background:#c9c9ce;color:#fff;font-size:19px;font-weight:800;
+  border-radius:14px;padding:14px 28px;line-height:1.5;position:relative;margin-bottom:6px;
+}
+.bubble::after{content:"";position:absolute;left:34%;bottom:-14px;border:10px solid transparent;border-top:16px solid #c9c9ce}
+.personsvg{display:block;margin:6px auto 8px}
+/* ===== unkou ===== */
+.livebar{display:flex;justify-content:center;padding:14px 16px 6px}
+.livebtn{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;border-radius:22px;padding:9px 20px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.livetag{background:var(--orange);color:#fff;font-size:11px;font-weight:800;border-radius:4px;padding:2px 7px}
+.newtag{background:var(--red);color:#fff;font-size:9px;font-weight:800;border-radius:3px;padding:1px 4px;vertical-align:middle;margin-left:4px}
+.promo{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 16px 6px;text-align:center}
+.promo .lead{font-size:13.5px;font-weight:600}
+.promo .lead b{font-weight:800}
+.promoicons{display:flex;justify-content:center;gap:18px;margin:16px 0 4px}
+.pico{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:10px;color:#6e6e73;width:84px}
+.pico .pi{width:62px;height:62px;border-radius:10px;background:#f4f4f6;display:flex;align-items:center;justify-content:center;font-size:30px}
+.idlink{display:inline-block;margin:4px 0 18px;color:var(--blue);font-size:14px;font-weight:600;background:none;border:none;font-family:inherit;cursor:pointer}
+/* ===== toast / modal ===== */
+#toast{
+  position:absolute;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);
+  background:rgba(40,40,44,.95);color:#fff;font-size:14px;padding:11px 20px;border-radius:24px;
+  opacity:0;transition:.25s;pointer-events:none;white-space:nowrap;z-index:60;max-width:90%;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);display:none;z-index:50;align-items:flex-end;justify-content:center}
+#overlay.show{display:flex}
+#modal{background:#fff;width:100%;max-width:430px;border-radius:16px 16px 0 0;max-height:78%;display:flex;flex-direction:column;animation:up .22s ease}
+@keyframes up{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
+#modal .mhead{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+#modal .mhead h2{font-size:16px;flex:1;text-align:center}
+#modal .mhead button{border:none;background:none;font-size:20px;color:#8e8e93;cursor:pointer;width:30px}
+#modal .mbody{overflow-y:auto;padding-bottom:calc(env(safe-area-inset-bottom,8px) + 12px)}
+.field{margin:14px 16px 0}
+.field label{display:block;font-size:13px;color:#6e6e73;margin-bottom:6px}
+.field input{width:100%;border:1px solid #d0d0d5;border-radius:8px;padding:12px;font-size:16px;font-family:inherit;outline-color:var(--blue)}
+.choice{display:block;width:calc(100% - 32px);margin:10px 16px 0;text-align:left;background:#f6f6f8;border:1px solid var(--line);border-radius:10px;padding:13px 14px;font-family:inherit;font-size:15px;cursor:pointer}
+/* timetable result */
+.ttcard{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:10px}
+.tthead{padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+.tthead b{font-size:17px}
+.tthead span{display:block;font-size:13px;color:#6e6e73;margin-top:3px}
+.ttgrid{display:flex;flex-wrap:wrap;padding:10px 12px 16px;gap:0}
+.tthour{width:100%;display:flex;border-bottom:1px dashed #ececf0;padding:6px 0;font-size:14px}
+.tthour .h{flex:none;width:34px;font-weight:800;color:var(--blue)}
+.tthour .mins{flex:1;color:#3a3a3f;letter-spacing:2px;line-height:1.7}
+.subnote{font-size:12px;color:#9a9aa0;padding:0 16px 14px}
+</style>
+</head>
+<body>
+<div id="phone">
+  <!-- status bar -->
+  <div class="statusbar">
+    <span>12:12 <span style="font-size:12px">➤</span></span>
+    <span class="right">
+      <span class="sig"><i></i><i></i><i></i><i></i></span>
+      <svg width="18" height="13" viewBox="0 0 20 14"><path d="M10 12.6a1.6 1.6 0 100 .01zM6.4 9.7a5.4 5.4 0 017.2 0l-1.5 1.6a3.3 3.3 0 00-4.2 0zM3.3 6.6a9.8 9.8 0 0113.4 0l-1.5 1.6a7.6 7.6 0 00-10.4 0zM.2 3.5a14.2 14.2 0 0119.6 0l-1.5 1.6a12 12 0 00-16.6 0z" fill="#1c1c1e"/></svg>
+      <span class="batt"><b></b></span>
+    </span>
+  </div>
+
+  <main>
+    <!-- ============ TOP : ルート詳細 ============ -->
+    <section class="screen active" id="sc-top">
+      <div class="routetabs">
+        <button class="back" onclick="toast('前の画面に戻ります')">‹</button>
+        <div class="nums" id="routeNums"></div>
+        <span style="width:24px"></span>
+      </div>
+      <div class="scroll">
+        <div class="ad" id="ad-top">
+          <span class="adlabel">広告 ⓘ <button onclick="closeAd('ad-top')">✕</button></span>
+          <div class="adbody" onclick="toast('広告ページを開きます（デモ）')">
+            <span class="adimg">🍕</span>
+            <span class="adtxt"><b>店舗限定: 水曜は配達ピザ半額</b><span>ドミノ・ピザジャパン</span></span>
+          </div>
+        </div>
+
+        <div class="summary">
+          <div class="times">
+            <b id="sumDep">13:52</b><span style="color:#9a9aa0">→</span><b id="sumArr">14:43</b>
+            <span class="min" id="sumMin">(51分)</span>
+            <span class="date">6月9日(火)</span>
+          </div>
+          <div class="meta">
+            <span class="icbadge">IC優先</span>
+            <b id="sumFare" style="font-size:16px">523円</b>
+            <span id="sumTrans">乗換2回</span>
+            <span id="sumKm">29.4km</span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button onclick="saveMemo()"><span class="ic"><svg viewBox="0 0 24 24"><path d="M7 3h10a1 1 0 011 1v17l-6-4-6 4V4a1 1 0 011-1z"/></svg></span>ルートメモ</button>
+          <button onclick="toast('ルートのスクリーンショットを保存しました')"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 7l1.5-2.5h5L16 7"/></svg></span>スクショ</button>
+          <button onclick="shareRoute()"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 15V4M8 7l4-3.5L16 7"/><path d="M5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"/></svg></span>共有</button>
+          <button onclick="toggleDelay(this)"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 10v4h3l5 4V6l-5 4H4z"/><path d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/></svg></span>遅延を通知</button>
+          <button onclick="toast('ナビアラームを設定しました（柿生 13:47 出発前に通知）')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 6h16l-6.5 7v6l-3 1.6V13L4 6z"/></svg></span>ナビアラーム</button>
+        </div>
+
+        <div class="timeline" id="timeline"></div>
+      </div>
+    </section>
+
+    <!-- ============ マイページ ============ -->
+    <section class="screen" id="sc-mypage">
+      <div class="appbar">
+        <h1>マイページ</h1>
+        <button class="rightbtn" id="mpEditBtn" onclick="toggleEdit()">編集</button>
+      </div>
+      <div class="segtabs" id="mpTabs">
+        <button onclick="mpTab(0)">ルートメモ</button>
+        <button class="on" onclick="mpTab(1)">マイルート</button>
+        <button onclick="mpTab(2)">検索履歴</button>
+      </div>
+      <div class="scroll">
+        <!-- ルートメモ -->
+        <div class="mp-pane" id="mp0" style="display:none">
+          <div id="memoList"></div>
+          <div class="empty" id="memoEmpty">ルートメモはありません<br>検索結果の「ルートメモ」から保存できます</div>
+        </div>
+        <!-- マイルート -->
+        <div class="mp-pane" id="mp1">
+          <div class="ad" id="ad-mp">
+            <span class="adlabel">広告 ⓘ <button onclick="closeAd('ad-mp')">✕</button></span>
+            <div class="adbody" onclick="toast('広告ページを開きます（デモ）')">
+              <span class="adimg">🍕</span>
+              <span class="adtxt"><b>水曜日は配達ピザ全品半額。</b><span>ドミノ・ピザジャパン</span></span>
+            </div>
+          </div>
+          <div class="sechead">現在地からのルート</div>
+          <div class="quickroutes">
+            <button onclick="regPlace('自宅')"><span class="qicon"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7M6 10v9h12v-9"/></svg><span class="plus">＋</span></span>自宅</button>
+            <button onclick="regPlace('職場')"><span class="qicon"><svg viewBox="0 0 24 24"><circle cx="12" cy="6" r="2.6"/><path d="M9 21v-6l-1.5-4L12 9l4.5 2L15 15v6"/></svg><span class="plus">＋</span></span>職場</button>
+            <button onclick="regPlace('その他')"><span class="qicon"><svg viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-10.6A6.5 6.5 0 0112 4a6.5 6.5 0 016.5 6.4C18.5 15 12 21 12 21z"/><circle cx="12" cy="10.4" r="2.2"/></svg><span class="plus">＋</span></span>その他</button>
+            <button onclick="toast('到着地を指定して検索します（デモ）')"><span class="qicon" style="background:#fff;box-shadow:0 0 0 2px #3186f0 inset"><svg viewBox="0 0 24 24" style="stroke:#3186f0"><path d="M12 21s-6.5-6-6.5-10.6A6.5 6.5 0 0112 4a6.5 6.5 0 016.5 6.4C18.5 15 12 21 12 21z"/><circle cx="12" cy="10.4" r="2.2"/></svg></span>到着を指定</button>
+          </div>
+          <div class="sechead">登録したルート <span class="cnt" id="myrouteCnt">1/20件</span></div>
+          <div class="tip" id="tipbar">
+            <span><span class="key">長押し</span>でルートの時刻・条件を変更できます</span>
+            <button onclick="document.getElementById('tipbar').style.display='none'">✕</button>
+          </div>
+          <div class="card" id="myrouteList">
+            <button class="routeitem" onclick="openRoute()" oncontextmenu="event.preventDefault();toast('時刻・条件の変更（デモ）')">
+              <button class="del" onclick="event.stopPropagation();delRoute(this)">−</button>
+              <span class="swap"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a6eeb" stroke-width="2"><path d="M4 8h13M14 4.5L17.5 8 14 11.5M20 16H7M10 12.5L6.5 16l3.5 3.5"/></svg></span>
+              柿生→田原町(東京都)
+              <span class="chev">›</span>
+            </button>
+          </div>
+          <div class="sechead">出発・到着の初期設定</div>
+          <div class="pluscard">
+            <span class="plusbadge">乗換案内プラス</span>
+            <div class="inner">
+              <h3>出発・到着の初期設定とは？</h3>
+              <p>出発・到着地をカスタマイズしてすぐに検索できる機能</p>
+              <div class="mockshot">
+                <div class="mrow"><span class="mtag" style="background:#e8453c">出発</span>東京ガーデンテラス紀尾井町</div>
+                <div class="mrow"><span class="mtag" style="background:#1a6eeb">到着</span>東京都世田谷区経堂</div>
+              </div>
+            </div>
+            <button class="btn-teal" onclick="toast('乗換案内プラスの紹介ページを開きます（デモ）')">カスタマイズする</button>
+          </div>
+        </div>
+        <!-- 検索履歴 -->
+        <div class="mp-pane" id="mp2" style="display:none">
+          <div class="card" style="margin-top:10px">
+            <button class="lrow" onclick="openRoute()"><span style="color:#9a9aa0;font-size:13px;width:42px">6/9</span>柿生 → 田原町(東京都)<span class="chev">›</span></button>
+            <button class="lrow" onclick="toast('このルートを再検索します（デモ）')"><span style="color:#9a9aa0;font-size:13px;width:42px">6/7</span>新宿 → 渋谷<span class="chev">›</span></button>
+            <button class="lrow" onclick="toast('このルートを再検索します（デモ）')"><span style="color:#9a9aa0;font-size:13px;width:42px">6/5</span>登戸 → 東京<span class="chev">›</span></button>
+          </div>
+          <div class="subnote" style="padding-top:10px">検索履歴は最大20件まで保存されます</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 時刻表 ============ -->
+    <section class="screen" id="sc-timetable">
+      <div class="appbar">
+        <h1>時刻表</h1>
+        <button class="rightbtn disabled" id="ttEditBtn" onclick="ttEdit()">編集</button>
+      </div>
+      <div class="segtabs" id="ttTabs">
+        <button onclick="ttTab(0)">定期区間タイマー</button>
+        <button onclick="ttTab(1)">時刻表を検索</button>
+        <button class="on" onclick="ttTab(2)">マイ時刻表</button>
+      </div>
+      <div class="searchwrap">
+        <div class="searchbar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#74747b" stroke-width="2"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>
+          <input id="ttSearch" placeholder="駅、バス停を入力" oninput="ttSuggest(this.value)">
+        </div>
+      </div>
+      <div class="scroll">
+        <!-- 定期区間タイマー -->
+        <div class="tt-pane" id="tt0" style="display:none">
+          <div class="empty" style="padding-top:56px">定期区間を登録すると、最終電車までの<br>残り時間をお知らせします</div>
+          <button class="btn-orange" onclick="toast('定期区間の登録画面を開きます（デモ）')">定期区間を登録</button>
+        </div>
+        <!-- 時刻表を検索 -->
+        <div class="tt-pane" id="tt1" style="display:none">
+          <div class="card" id="ttSuggestList" style="margin-top:10px"></div>
+          <div id="ttResult"></div>
+        </div>
+        <!-- マイ時刻表 -->
+        <div class="tt-pane" id="tt2">
+          <div id="ttLoggedOut">
+            <div class="loginstate">
+              <div class="bubble">ログインすると<br>閲覧できます</div>
+              <svg class="personsvg" width="170" height="240" viewBox="0 0 170 240">
+                <g fill="#c9c9ce">
+                  <circle cx="96" cy="52" r="22"/>
+                  <path d="M84 76h24c14 0 24 10 24 24l-6 52c-1 6-5 8-9 8l-4 70h-12l-3-70h-6l-3 70H77l-4-70c-4 0-8-2-9-8l-4-52c0-14 10-24 24-24z"/>
+                  <path d="M70 96l-14 18c-3 4-9 1-7-4l12-22z"/>
+                  <circle cx="64" cy="48" r="20" fill="none" stroke="#c9c9ce" stroke-width="9"/>
+                  <rect x="55" y="66" width="9" height="30" rx="4" transform="rotate(28 59 80)"/>
+                </g>
+                <circle cx="64" cy="48" r="15" fill="#f2f2f4"/>
+                <path d="M58 40c4-3 9-3 12 0v16c-3 3-8 3-12 0z" fill="#c9c9ce"/>
+              </svg>
+            </div>
+            <button class="btn-orange" onclick="openLogin()">ログイン</button>
+          </div>
+          <div id="ttLoggedIn" style="display:none">
+            <div class="ttcard">
+              <div class="tthead"><b>柿生駅　小田急小田原線</b><span>新宿・代々木上原方面　平日</span></div>
+              <div class="ttgrid">
+                <div class="tthour"><span class="h">13</span><span class="mins">02　12　22　32　42　52</span></div>
+                <div class="tthour"><span class="h">14</span><span class="mins">02　12　22　32　42　52</span></div>
+                <div class="tthour"><span class="h">15</span><span class="mins">01　11　21　31　41　51</span></div>
+              </div>
+              <div class="subnote">タップで列車の詳細を表示（デモ）</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 運行情報 ============ -->
+    <section class="screen" id="sc-info">
+      <div class="appbar">
+        <h1>運行情報</h1>
+        <button class="rightbtn" onclick="openNotify()">通知設定</button>
+      </div>
+      <div class="segtabs" id="uiTabs" style="border-bottom:3px solid #d8d8dc">
+        <button class="on" onclick="uiTab(0)">鉄道運行情報</button>
+        <button onclick="uiTab(1)">フライト情報<span class="newtag">NEW</span></button>
+      </div>
+      <div class="searchwrap">
+        <div class="searchbar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#74747b" stroke-width="2"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>
+          <input id="uiSearch" placeholder="路線を入力" oninput="uiFilter(this.value)">
+        </div>
+      </div>
+      <div class="scroll">
+        <!-- 鉄道 -->
+        <div class="ui-pane" id="ui0">
+          <div id="uiFiltered"></div>
+          <div id="uiDefault">
+            <div class="livebar">
+              <button class="livebtn" onclick="toast('運行情報キャスト（LIVE配信）を再生します（デモ）')"><span class="livetag">LIVE ▶</span>運行情報キャストで見る</button>
+            </div>
+            <div class="sechead">列車別から探す</div>
+            <div class="card">
+              <button class="lrow" onclick="openLineList('在来線、私鉄、地下鉄')">在来線、私鉄、地下鉄<span class="chev">›</span></button>
+              <button class="lrow" onclick="openLineList('新幹線')">新幹線<span class="chev">›</span></button>
+              <button class="lrow" onclick="openLineList('有料特急')">有料特急<span class="chev">›</span></button>
+            </div>
+            <div class="sechead">登録した路線</div>
+            <div class="promo">
+              <div class="lead">登録した路線で遅延・運休が発生したら<b>すぐにお知らせ!</b></div>
+              <div class="promoicons">
+                <span class="pico"><span class="pi">⚠️</span>遅延・運休発生</span>
+                <span class="pico"><span class="pi">🚃</span>運転見合わせ</span>
+                <span class="pico"><span class="pi">⏰</span>時間/曜日の指定可能</span>
+              </div>
+              <button class="btn-orange" style="width:calc(100% - 90px);margin:8px auto 10px;font-size:16px;border-radius:24px" onclick="registerLine()">路線を登録</button>
+              <button class="idlink" onclick="toast('かんたんID登録ページを開きます（デモ）')">かんたんID登録</button>
+            </div>
+            <div class="sechead">周辺の路線</div>
+            <div class="card" style="margin-bottom:24px">
+              <button class="lrow" onclick="lineStatus('小田急多摩線')">小田急多摩線<span class="chev">›</span></button>
+              <button class="lrow" onclick="lineStatus('小田急小田原線')">小田急小田原線<span class="chev">›</span></button>
+            </div>
+          </div>
+        </div>
+        <!-- フライト -->
+        <div class="ui-pane" id="ui1" style="display:none">
+          <div class="sechead">空港から探す</div>
+          <div class="card" style="margin-bottom:24px">
+            <button class="lrow" onclick="toast('羽田空港の発着情報を表示します（デモ）')">羽田空港(HND)<span class="stat">○ 平常運航</span></button>
+            <button class="lrow" onclick="toast('成田空港の発着情報を表示します（デモ）')">成田空港(NRT)<span class="stat">○ 平常運航</span></button>
+            <button class="lrow" onclick="toast('関西空港の発着情報を表示します（デモ）')">関西空港(KIX)<span class="stat delay">⚠ 一部遅延</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 設定 ============ -->
+    <section class="screen" id="sc-settings">
+      <div class="appbar"><h1>設定</h1></div>
+      <div class="scroll">
+        <div class="sechead">検索</div>
+        <div class="card">
+          <button class="lrow" onclick="toast('検索条件の設定（デモ）')">検索条件の設定<span class="chev">›</span></button>
+          <button class="lrow" onclick="toast('運賃の表示: IC優先')">運賃の表示<span style="margin-left:auto;color:#8e8e93;font-size:14px">IC優先</span><span class="chev" style="margin-left:6px">›</span></button>
+        </div>
+        <div class="sechead">通知</div>
+        <div class="card">
+          <button class="lrow" onclick="openNotify()">プッシュ通知の設定<span class="chev">›</span></button>
+        </div>
+        <div class="sechead">その他</div>
+        <div class="card" style="margin-bottom:24px">
+          <button class="lrow" onclick="toast('ヘルプページを開きます（デモ）')">アプリの使い方<span class="chev">›</span></button>
+          <button class="lrow" onclick="toast('お問い合わせフォームを開きます（デモ）')">お問い合わせ<span class="chev">›</span></button>
+          <button class="lrow" onclick="toast('バージョン 9.20.1（デモ）')">バージョン情報<span style="margin-left:auto;color:#8e8e93;font-size:14px">9.20.1</span></button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- bottom tab bar -->
+  <nav class="tabbar" id="tabbar">
+    <button class="on" onclick="go('top',this)">
+      <svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="15" rx="3"/><path d="M5 11h14M9 3v8M15 3v8"/><circle cx="9" cy="15" r="1" class="fillme"/><circle cx="15" cy="15" r="1" class="fillme"/><path d="M8 18l-2 3M16 18l2 3"/></svg>トップ</button>
+    <button onclick="go('mypage',this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4-6 7-6s6 2 7 6"/></svg>マイページ</button>
+    <button onclick="go('timetable',this)">
+      <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h7M9 12.5h7M9 16h7"/><circle cx="7" cy="9" r=".8" class="fillme"/><circle cx="7" cy="12.5" r=".8" class="fillme"/><circle cx="7" cy="16" r=".8" class="fillme"/></svg>時刻表</button>
+    <button onclick="go('info',this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.5" r="1" class="fillme"/></svg>運行情報</button>
+    <button onclick="go('settings',this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5l1.2 2.7 2.9-.6 1 2.8 2.8 1-.6 2.9 2.2 2-2.2 2 .6 2.9-2.8 1-1 2.8-2.9-.6-1.2 2.7-1.2-2.7-2.9.6-1-2.8-2.8-1 .6-2.9-2.2-2 2.2-2-.6-2.9 2.8-1 1-2.8 2.9.6z"/></svg>設定</button>
+  </nav>
+
+  <div id="toast"></div>
+  <div id="overlay" onclick="if(event.target===this)closeModal()">
+    <div id="modal">
+      <div class="mhead"><button style="visibility:hidden">✕</button><h2 id="mtitle"></h2><button onclick="closeModal()">✕</button></div>
+      <div class="mbody" id="mbody"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------- 基本 ---------------- */
+function go(name,btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sc-'+name).classList.add('active');
+  document.querySelectorAll('#tabbar button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+let toastTimer;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+function openModal(title,html){
+  document.getElementById('mtitle').textContent=title;
+  document.getElementById('mbody').innerHTML=html;
+  document.getElementById('overlay').classList.add('show');
+}
+function closeModal(){document.getElementById('overlay').classList.remove('show')}
+function closeAd(id){document.getElementById(id).style.display='none';toast('広告を閉じました')}
+
+/* ---------------- トップ: ルート ---------------- */
+const routes=[
+  {dep:'13:48',arr:'14:46',min:58,fare:'472円',trans:'乗換3回',km:'30.1km',tag:null},
+  {dep:'13:52',arr:'14:43',min:51,fare:'523円',trans:'乗換2回',km:'29.4km',tag:'haya'},
+  {dep:'13:52',arr:'14:47',min:55,fare:'523円',trans:'乗換2回',km:'29.4km',tag:'raku'},
+  {dep:'14:00',arr:'15:02',min:62,fare:'472円',trans:'乗換3回',km:'30.1km',tag:'yasu'},
+  {dep:'13:55',arr:'14:52',min:57,fare:'545円',trans:'乗換2回',km:'29.8km',tag:null},
+  {dep:'14:02',arr:'14:58',min:56,fare:'523円',trans:'乗換2回',km:'29.4km',tag:null},
+];
+let curRoute=1;
+function renderRouteNums(){
+  const wrap=document.getElementById('routeNums');
+  wrap.innerHTML='';
+  const tags={haya:'早',raku:'楽',yasu:'安'};
+  routes.forEach((r,i)=>{
+    const b=document.createElement('button');
+    b.className='rnum'+(i===curRoute?' on':'');
+    b.innerHTML=(i+1)+(r.tag?`<span class="tag ${r.tag}">${tags[r.tag]}</span>`:'');
+    b.onclick=()=>{curRoute=i;renderRouteNums();renderSummary();toast(`ルート${i+1}を表示しています`)};
+    wrap.appendChild(b);
+  });
+}
+function renderSummary(){
+  const r=routes[curRoute];
+  sumDep.textContent=r.dep;sumArr.textContent=r.arr;
+  sumMin.textContent=`(${r.min}分)`;
+  sumFare.textContent=r.fare;sumTrans.textContent=r.trans;sumKm.textContent=r.km;
+}
+function renderTimeline(){
+  document.getElementById('timeline').innerHTML=`
+  <div class="tl-station">
+    <span class="t">13:52</span>
+    <span class="mark"><span class="badge-dep">発</span></span>
+    <span class="name">柿生 <span class="sticon">ⅲ</span></span>
+    <span class="weather" onclick="toast('柿生周辺の天気: くもり 24℃（デモ）')">☁️</span>
+  </div>
+  <div class="tl-seg">
+    <button class="stops" onclick="toggleStops('stops1',this)">6駅 ∨</button>
+    <div class="linehead">
+      <span class="lmark">OH</span>
+      <span class="ln"><b>小田急小田原線</b><span>新宿行　10両</span></span>
+      <button class="fare" onclick="toast('この区間の運賃: 324円（IC）')">324円 ›</button>
+    </div>
+    <ul class="stopslist" id="stops1">
+      <li><b>13:55</b>鶴川</li><li><b>13:58</b>玉川学園前</li><li><b>14:00</b>町田</li>
+      <li><b>14:02</b>相模大野</li><li><b>14:04</b>向ヶ丘遊園</li><li><b>14:05</b>登戸</li>
+    </ul>
+    <div class="payrow">
+      <span class="paylabel">支払</span>
+      <span class="pv"><b>〝 クレカタッチ決済可</b> <span>(柿生 → 新宿)</span><small>※金額は異なります</small></span>
+    </div>
+    <div class="platform">
+      <span class="pn">発 <span class="num">2</span>番線</span>
+      <span class="pn">着 <span class="num">4</span>番線</span>
+    </div>
+    <button class="congest" onclick="openCongest('小田急小田原線')"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-4 3.5V5z"/></svg>混雑状況を投稿</button>
+  </div>
+  <div class="tl-station tl-mid">
+    <span class="t"><small>14:05着</small>14:06</span>
+    <span class="mark"></span>
+    <span class="name">登戸 <span class="sticon">ⅲ</span></span>
+  </div>
+  <div class="tl-seg">
+    <button class="stops" onclick="toggleStops('stops2',this)">3駅 ∨</button>
+    <div class="linehead">
+      <span class="lmark">OH</span>
+      <span class="ln"><b>小田急小田原線快速急行</b><span>新宿行　10両</span></span>
+    </div>
+    <ul class="stopslist" id="stops2">
+      <li><b>14:13</b>下北沢</li><li><b>14:18</b>代々木上原</li><li><b>14:23</b>新宿</li>
+    </ul>
+    <div class="platform"><span class="pn">発 <span class="num">3</span>番線</span></div>
+    <button class="congest" onclick="openCongest('小田急小田原線快速急行')"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-4 3.5V5z"/></svg>混雑状況を投稿</button>
+  </div>
+  <div class="tl-station tl-mid">
+    <span class="t"><small>14:23着</small>14:27</span>
+    <span class="mark"></span>
+    <span class="name">新宿 <span class="sticon">ⅲ</span></span>
+  </div>
+  <div class="tl-seg" style="border-left-color:#e8453c">
+    <button class="stops" style="border-color:#e8453c;color:#e8453c" onclick="toggleStops('stops3',this)">4駅 ∨</button>
+    <div class="linehead">
+      <span class="lmark" style="background:#e8453c;border-color:#c2342c">M</span>
+      <span class="ln"><b>東京メトロ丸ノ内線</b><span>池袋行　6両</span></span>
+      <button class="fare" onclick="toast('この区間の運賃: 199円（IC）')">199円 ›</button>
+    </div>
+    <ul class="stopslist" id="stops3">
+      <li><b>14:29</b>新宿三丁目</li><li><b>14:31</b>新宿御苑前</li><li><b>14:33</b>四谷三丁目</li><li><b>14:36</b>赤坂見附</li>
+    </ul>
+    <div class="platform"><span class="pn">発 <span class="num">1</span>番線</span><span class="pn">着 <span class="num">2</span>番線</span></div>
+  </div>
+  <div class="tl-station tl-mid">
+    <span class="t"><small>14:36着</small>14:37</span>
+    <span class="mark"></span>
+    <span class="name">赤坂見附 <span class="sticon">ⅲ</span></span>
+  </div>
+  <div class="tl-seg" style="border-left-color:#f59a26">
+    <div class="linehead">
+      <span class="lmark" style="background:#f59a26;border-color:#d6841a">G</span>
+      <span class="ln"><b>東京メトロ銀座線</b><span>浅草行　6両</span></span>
+    </div>
+    <div class="platform"><span class="pn">発 <span class="num">1</span>番線</span></div>
+  </div>
+  <div class="tl-station">
+    <span class="t">14:43</span>
+    <span class="mark"><span class="badge-dep">着</span></span>
+    <span class="name">田原町(東京都) <span class="sticon">ⅲ</span></span>
+    <span class="weather" onclick="toast('田原町周辺の天気: くもり 25℃（デモ）')">☁️</span>
+  </div>`;
+}
+function toggleStops(id,btn){
+  const el=document.getElementById(id);
+  el.classList.toggle('open');
+  btn.innerHTML=btn.innerHTML.replace(el.classList.contains('open')?'∨':'∧',el.classList.contains('open')?'∧':'∨');
+}
+function shareRoute(){
+  const r=routes[curRoute];
+  const text=`柿生→田原町(東京都) ${r.dep}→${r.arr}（${r.min}分・${r.fare}）`;
+  if(navigator.share){navigator.share({title:'乗換案内ルート',text}).catch(()=>{});}
+  else{toast('共有: '+text);}
+}
+let delayOn=false;
+function toggleDelay(){
+  delayOn=!delayOn;
+  toast(delayOn?'このルートの遅延を通知します':'遅延通知を解除しました');
+}
+function openCongest(line){
+  openModal('混雑状況を投稿',`
+    <p style="padding:14px 16px 4px;font-size:13px;color:#6e6e73">${line}の現在の混雑状況を教えてください</p>
+    <button class="choice" onclick="postCongest('空いている（座れる）')">🟢 空いている（座れる）</button>
+    <button class="choice" onclick="postCongest('やや混雑（立ち客あり）')">🟡 やや混雑（立ち客あり）</button>
+    <button class="choice" onclick="postCongest('混雑（肩がふれあう）')">🟠 混雑（肩がふれあう）</button>
+    <button class="choice" onclick="postCongest('非常に混雑')">🔴 非常に混雑</button>`);
+}
+function postCongest(v){closeModal();toast(`「${v}」を投稿しました。ご協力ありがとうございます`)}
+
+/* ---------------- マイページ ---------------- */
+const memos=[];
+function mpTab(i){
+  document.querySelectorAll('#mpTabs button').forEach((b,j)=>b.classList.toggle('on',i===j));
+  for(let j=0;j<3;j++)document.getElementById('mp'+j).style.display=i===j?'block':'none';
+}
+function saveMemo(){
+  const r=routes[curRoute];
+  memos.push(`柿生 → 田原町(東京都)　${r.dep}発 (${r.fare})`);
+  renderMemos();
+  toast('ルートメモに保存しました（マイページで確認できます）');
+}
+function renderMemos(){
+  const list=document.getElementById('memoList');
+  document.getElementById('memoEmpty').style.display=memos.length?'none':'block';
+  list.innerHTML=memos.length?'<div class="card" style="margin-top:10px">'+memos.map((m,i)=>
+    `<button class="lrow" onclick="openRoute()">📌 ${m}<span class="chev">›</span></button>`).join('')+'</div>':'';
+}
+function openRoute(){
+  go('top',document.querySelector('#tabbar button'));
+  toast('柿生→田原町(東京都)のルートを表示します');
+}
+function regPlace(name){
+  openModal(name+'を登録',`
+    <div class="field"><label>${name}の最寄り駅・住所</label><input id="placeInput" placeholder="例）柿生駅"></div>
+    <button class="btn-teal" style="background:var(--blue)" onclick="doRegPlace('${name}')">登録する</button>`);
+}
+function doRegPlace(name){
+  const v=document.getElementById('placeInput').value||'未入力';
+  closeModal();toast(`${name}「${v}」を登録しました`);
+}
+let editing=false;
+function toggleEdit(){
+  editing=!editing;
+  document.getElementById('sc-mypage').classList.toggle('editmode',editing);
+  document.getElementById('mpEditBtn').textContent=editing?'完了':'編集';
+}
+function delRoute(btn){
+  btn.closest('.routeitem').remove();
+  document.getElementById('myrouteCnt').textContent='0/20件';
+  toast('ルートを削除しました');
+}
+
+/* ---------------- 時刻表 ---------------- */
+let loggedIn=false;
+function ttTab(i){
+  document.querySelectorAll('#ttTabs button').forEach((b,j)=>b.classList.toggle('on',i===j));
+  for(let j=0;j<3;j++)document.getElementById('tt'+j).style.display=i===j?'block':'none';
+}
+function openLogin(){
+  openModal('ログイン',`
+    <div class="field"><label>ID（メールアドレス）</label><input id="loginId" placeholder="example@mail.com" inputmode="email"></div>
+    <div class="field"><label>パスワード</label><input id="loginPw" type="password" placeholder="パスワード"></div>
+    <button class="btn-orange" style="width:calc(100% - 32px);margin:18px 16px" onclick="doLogin()">ログイン</button>
+    <button class="idlink" style="display:block;margin:0 auto 14px" onclick="toast('新規登録ページを開きます（デモ）')">かんたんID登録（無料）</button>`);
+}
+function doLogin(){
+  loggedIn=true;closeModal();
+  document.getElementById('ttLoggedOut').style.display='none';
+  document.getElementById('ttLoggedIn').style.display='block';
+  document.getElementById('ttEditBtn').classList.remove('disabled');
+  toast('ログインしました。マイ時刻表を表示します');
+}
+function ttEdit(){
+  if(!loggedIn){toast('ログインすると編集できます');return;}
+  toast('マイ時刻表の編集モード（デモ）');
+}
+const stations=['柿生','鶴川','町田','登戸','下北沢','代々木上原','新宿','赤坂見附','田原町(東京都)'];
+function ttSuggest(v){
+  if(v && !document.querySelector('#ttTabs button:nth-child(2)').classList.contains('on'))ttTab(1);
+  const box=document.getElementById('ttSuggestList');
+  document.getElementById('ttResult').innerHTML='';
+  if(!v){box.innerHTML='';return;}
+  const hit=stations.filter(s=>s.includes(v));
+  box.innerHTML=hit.length?hit.map(s=>`<button class="lrow" onclick="showTimetable('${s}')">🚉 ${s}<span class="chev">›</span></button>`).join('')
+    :'<div class="empty">該当する駅・バス停がありません</div>';
+}
+function showTimetable(st){
+  document.getElementById('ttSuggestList').innerHTML='';
+  document.getElementById('ttSearch').value=st;
+  document.getElementById('ttResult').innerHTML=`
+    <div class="ttcard">
+      <div class="tthead"><b>${st}駅　時刻表</b><span>上り方面　平日</span></div>
+      <div class="ttgrid">
+        <div class="tthour"><span class="h">13</span><span class="mins">05　15　25　35　45　55</span></div>
+        <div class="tthour"><span class="h">14</span><span class="mins">05　15　25　35　45　55</span></div>
+        <div class="tthour"><span class="h">15</span><span class="mins">04　14　24　34　44　54</span></div>
+      </div>
+      <div class="subnote">方面・曜日の切替（デモ）</div>
+    </div>`;
+  toast(st+'の時刻表を表示しました');
+}
+
+/* ---------------- 運行情報 ---------------- */
+function uiTab(i){
+  document.querySelectorAll('#uiTabs button').forEach((b,j)=>b.classList.toggle('on',i===j));
+  for(let j=0;j<2;j++)document.getElementById('ui'+j).style.display=i===j?'block':'none';
+}
+const lines=[
+  {n:'小田急小田原線',s:'○ 平常運転'},
+  {n:'小田急多摩線',s:'○ 平常運転'},
+  {n:'小田急江ノ島線',s:'○ 平常運転'},
+  {n:'JR山手線',s:'○ 平常運転'},
+  {n:'JR中央線(快速)',s:'⚠ 遅延',d:1},
+  {n:'JR南武線',s:'○ 平常運転'},
+  {n:'東京メトロ丸ノ内線',s:'○ 平常運転'},
+  {n:'東京メトロ銀座線',s:'○ 平常運転'},
+  {n:'東急田園都市線',s:'⚠ 遅延',d:1},
+];
+function uiFilter(v){
+  const box=document.getElementById('uiFiltered');
+  document.getElementById('uiDefault').style.display=v?'none':'block';
+  if(!v){box.innerHTML='';return;}
+  const hit=lines.filter(l=>l.n.includes(v));
+  box.innerHTML=hit.length?'<div class="card" style="margin-top:10px">'+hit.map(l=>
+    `<button class="lrow" onclick="lineStatus('${l.n}')">${l.n}<span class="stat${l.d?' delay':''}">${l.s}</span></button>`).join('')+'</div>'
+    :'<div class="empty">該当する路線がありません</div>';
+}
+function openLineList(cat){
+  const subset=cat==='新幹線'
+    ?[{n:'東海道新幹線',s:'○ 平常運転'},{n:'東北新幹線',s:'○ 平常運転'},{n:'上越新幹線',s:'○ 平常運転'}]
+    :cat==='有料特急'
+    ?[{n:'小田急ロマンスカー',s:'○ 平常運転'},{n:'特急あずさ',s:'⚠ 遅延',d:1},{n:'特急ひたち',s:'○ 平常運転'}]
+    :lines;
+  openModal(cat,subset.map(l=>
+    `<button class="lrow" onclick="closeModal();lineStatus('${l.n}')">${l.n}<span class="stat${l.d?' delay':''}">${l.s}</span></button>`).join(''));
+}
+function lineStatus(name){
+  const l=lines.find(x=>x.n===name);
+  const delayed=l&&l.d;
+  openModal(name,`
+    <div style="padding:20px 16px">
+      <div style="font-size:15px;font-weight:700;color:${delayed?'#e07b00':'#2da44e'};margin-bottom:8px">${delayed?'⚠ 遅延が発生しています':'○ 平常運転'}</div>
+      <p style="font-size:14px;color:#3a3a3f;line-height:1.7">${delayed
+        ?'人身事故の影響で、上下線の一部列車に約15分の遅れが出ています。（12:05現在・デモ）'
+        :'現在、事故・遅延に関する情報はありません。（12:12現在・デモ）'}</p>
+      <button class="btn-orange" style="width:100%;margin:20px 0 4px;font-size:15px;border-radius:24px" onclick="closeModal();toast('${name}を登録しました。遅延時に通知します')">この路線を登録</button>
+    </div>`);
+}
+function registerLine(){
+  openModal('路線を登録',lines.map(l=>
+    `<button class="lrow" onclick="closeModal();toast('${l.n}を登録しました。遅延時に通知します')">${l.n}<span class="stat${l.d?' delay':''}">${l.s}</span></button>`).join(''));
+}
+function openNotify(){
+  openModal('通知設定',`
+    ${['遅延・運休の通知','運転再開の通知','夜間(22時-7時)も通知する'].map((t,i)=>`
+    <label class="lrow" style="cursor:pointer">${t}
+      <input type="checkbox" ${i<2?'checked':''} style="margin-left:auto;width:22px;height:22px;accent-color:var(--blue)"
+        onchange="toast('${t}: '+(this.checked?'ON':'OFF'))">
+    </label>`).join('')}
+    <div class="subnote" style="padding:12px 16px">登録した路線にのみ通知が届きます（デモ）</div>`);
+}
+
+/* init */
+renderRouteNums();renderSummary();renderTimeline();renderMemos();
+</script>
+</body>
+</html>
