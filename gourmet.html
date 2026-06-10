@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#ffffff">
+<title>グルメさがし</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root{
+    --accent:#e8650d;
+    --accent-dark:#c8580c;
+    --gold:#f5a300;
+    --red:#e23a3a;
+    --text:#222;
+    --sub:#777;
+    --line:#e5e2dd;
+    --bg:#f7f6f4;
+    --beige:#f3efe7;
+    --nav-h:60px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
+    color:var(--text);background:var(--bg);
+    max-width:520px;margin:0 auto;
+    box-shadow:0 0 24px rgba(0,0,0,.08);
+    position:relative;min-height:100dvh;
+  }
+  /* ---------- 共通 ---------- */
+  .screen{display:none;padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom))}
+  .screen.active{display:block}
+  .topbar{
+    position:sticky;top:0;z-index:1000;background:#fff;
+    padding:10px 12px;display:flex;align-items:center;gap:10px;
+    border-bottom:1px solid var(--line);
+  }
+  .topbar .title{flex:1;text-align:center;font-size:16px;font-weight:700}
+  .searchbox{
+    flex:1;display:flex;align-items:center;gap:8px;
+    background:#f0eeea;border-radius:8px;padding:9px 12px;color:var(--sub);font-size:14px;
+    border:none;width:100%;text-align:left;
+  }
+  .hamburger{display:flex;flex-direction:column;gap:4px;padding:6px;background:none;border:none}
+  .hamburger span{display:block;width:20px;height:2px;background:#444;border-radius:2px}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:10px 12px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{
+    flex:0 0 auto;background:#fff;border:1px solid var(--line);border-radius:999px;
+    padding:8px 16px;font-size:13px;font-weight:600;color:#333;white-space:nowrap;
+    box-shadow:0 1px 3px rgba(0,0,0,.08);cursor:pointer;
+  }
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .arealinks{display:flex;gap:18px;overflow-x:auto;padding:10px 14px;background:#fff;border-bottom:1px solid var(--line);scrollbar-width:none}
+  .arealinks::-webkit-scrollbar{display:none}
+  .arealinks button{flex:0 0 auto;background:none;border:none;font-size:14px;color:#2a64ad;font-weight:600;cursor:pointer;white-space:nowrap}
+  .countbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:12px 14px;background:#fff;border-bottom:1px solid var(--line);
+  }
+  .countbar .where{font-size:13px;color:var(--sub)}
+  .countbar .num{font-size:18px;font-weight:700;margin-top:2px}
+  .sortbtn{background:none;border:none;color:#333;font-size:13px;font-weight:600;display:flex;align-items:center;gap:4px;cursor:pointer}
+  /* ---------- お店カード ---------- */
+  .card{background:#fff;border-bottom:8px solid var(--bg);padding:14px}
+  .card h3{font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px}
+  .card .meta{font-size:12px;color:var(--sub);margin-top:4px;line-height:1.5}
+  .card .photos{display:flex;gap:4px;margin:10px 0;border-radius:6px;overflow:hidden}
+  .ph{
+    flex:1;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;
+    font-size:30px;color:#fff;
+  }
+  .card .desc{font-size:13px;color:#444;line-height:1.6;margin-top:4px}
+  .scorewrap{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:13px}
+  .stars{color:var(--gold);letter-spacing:1px;font-size:14px}
+  .score{color:var(--red);font-weight:700;font-size:15px}
+  .budget{font-size:12px;color:#555;margin-top:4px;display:flex;gap:10px}
+  .budget .yen{color:#2a64ad;font-weight:700}
+  .budget .yen.lunch{color:#d99a00}
+  .cardbtns{position:absolute;right:14px;top:14px;display:flex;gap:14px}
+  .iconbtn{background:none;border:none;font-size:20px;color:#bbb;cursor:pointer}
+  .iconbtn.saved{color:var(--accent)}
+  .card{position:relative}
+  /* ---------- 地図 ---------- */
+  #map,#savedMap{width:100%;height:300px;z-index:0}
+  .mapwrap{position:relative}
+  .map-chips{position:absolute;top:8px;left:0;right:0;z-index:500}
+  .research{
+    position:absolute;bottom:10px;left:50%;transform:translateX(-50%);z-index:500;
+    background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 18px;
+    font-size:13px;font-weight:700;color:var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer;display:none;
+  }
+  .netyoyaku{
+    display:flex;align-items:center;gap:10px;background:#fff;
+    padding:12px 14px;border-bottom:1px solid var(--line);
+  }
+  .netyoyaku .tag{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .netyoyaku select,.netyoyaku input{border:none;background:none;color:#2a64ad;font-size:13px;font-weight:600}
+  /* ---------- タブ(画面内) ---------- */
+  .subtabs{display:flex;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:900}
+  .subtabs button{
+    flex:1;background:none;border:none;padding:14px 0;font-size:14px;font-weight:700;color:#888;
+    border-bottom:3px solid transparent;cursor:pointer;
+  }
+  .subtabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
+  /* ---------- タイムライン ---------- */
+  .review{background:#fff;border-bottom:8px solid var(--bg);padding:14px;position:relative}
+  .review .who{display:flex;align-items:center;gap:10px}
+  .review .avatar{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;flex-shrink:0}
+  .review .uname{font-size:14px;font-weight:700}
+  .review .ucount{font-size:11px;color:var(--sub)}
+  .follow{margin-left:auto;background:none;border:none;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer}
+  .review .shop{margin-top:12px;font-size:16px;font-weight:700}
+  .review .shopmeta{font-size:12px;color:var(--sub);margin-top:2px}
+  .review .visit{font-size:11px;color:var(--sub);margin-top:8px}
+  .review .body{font-size:14px;line-height:1.7;margin-top:8px;color:#333}
+  .review .rtitle{font-size:14px;font-weight:700;margin-top:10px}
+  .reactions{display:flex;gap:0;border-top:1px solid var(--line);margin-top:12px;padding-top:10px}
+  .reactions button{flex:1;background:none;border:none;font-size:13px;color:#666;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+  .reactions button.liked{color:var(--red);font-weight:700}
+  .likecount{font-size:13px;color:var(--red);margin-top:10px}
+  .timestamp-bar{padding:10px 14px;font-size:12px;color:var(--sub);background:var(--bg)}
+  /* ---------- 履歴 ---------- */
+  .hist-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#fff;border-bottom:1px solid var(--line)}
+  .hist-head .t{font-size:15px;font-weight:700}
+  .hist-head button{background:none;border:none;color:#2a64ad;font-size:13px;cursor:pointer}
+  .hist-date{text-align:right;font-size:11px;color:var(--sub);margin-top:8px}
+  /* ---------- 予約 ---------- */
+  .resv{background:#fff;border-bottom:8px solid var(--bg);padding:14px}
+  .resv .head{display:flex;gap:10px}
+  .resv .thumb{width:64px;height:64px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;flex-shrink:0}
+  .resv .name{font-size:15px;font-weight:700;color:#2a64ad}
+  .resv .sub{font-size:11px;color:var(--sub);margin-top:3px;line-height:1.5}
+  .mapbtn{margin-left:auto;align-self:flex-start;border:1px solid var(--line);background:#fff;border-radius:6px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0}
+  .resv table{width:100%;margin-top:12px;font-size:13px;border-collapse:collapse}
+  .resv th{text-align:left;color:var(--sub);font-weight:400;padding:5px 0;width:84px;vertical-align:top}
+  .resv td{padding:5px 0;color:#222}
+  .badge{display:inline-block;background:#efe8d8;color:#7a5c1e;font-size:11px;font-weight:700;border-radius:4px;padding:3px 8px}
+  .badge.before{background:#e2efe2;color:#2e7d32}
+  .badge.cancel{background:#f3dede;color:#b3403a}
+  .resv .bigbtn{
+    width:100%;margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:8px;
+    padding:13px;font-size:14px;font-weight:700;color:#333;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.06);
+  }
+  .resv .duo{display:flex;margin-top:10px}
+  .resv .duo button{flex:1;background:none;border:none;color:var(--accent);font-size:13px;font-weight:700;padding:8px;cursor:pointer}
+  .resv .duo button+button{border-left:1px solid var(--line)}
+  /* ---------- 下部ナビ ---------- */
+  nav.bottom{
+    position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;
+    background:#fff;border-top:1px solid var(--line);display:flex;z-index:2000;
+    height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);
+  }
+  nav.bottom button{
+    flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;font-size:10px;color:#8a8a8a;cursor:pointer;position:relative;
+  }
+  nav.bottom button.on{color:var(--accent);font-weight:700}
+  nav.bottom svg{width:22px;height:22px;fill:currentColor}
+  nav.bottom .dot{position:absolute;top:8px;right:calc(50% - 16px);width:8px;height:8px;border-radius:50%;background:var(--red)}
+  /* ---------- 詳細 / モーダル ---------- */
+  .sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:3000;display:none}
+  .sheet-bg.open{display:block}
+  .sheet{
+    position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;
+    background:#fff;border-radius:16px 16px 0 0;z-index:3001;max-height:88dvh;overflow-y:auto;
+    padding-bottom:calc(20px + env(safe-area-inset-bottom));
+  }
+  .sheet .grab{width:40px;height:4px;background:#ddd;border-radius:2px;margin:10px auto}
+  .sheet .inner{padding:6px 18px 0}
+  .sheet h2{font-size:19px;font-weight:700}
+  .sheet .genre{font-size:13px;color:var(--sub);margin-top:4px}
+  .infrow{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;align-items:flex-start}
+  .infrow .k{color:var(--sub);width:70px;flex-shrink:0;font-size:13px;padding-top:1px}
+  .actions{display:flex;gap:10px;margin:16px 0 6px}
+  .actions button{
+    flex:1;padding:13px 0;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;border:1px solid var(--line);background:#fff;color:#333;
+  }
+  .actions .primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .actions .saved-on{color:var(--accent);border-color:var(--accent)}
+  /* フォーム */
+  .fgroup{margin:14px 0}
+  .fgroup label{display:block;font-size:13px;font-weight:700;color:#555;margin-bottom:6px}
+  .fgroup input,.fgroup select,.fgroup textarea{
+    width:100%;border:1px solid var(--line);border-radius:8px;padding:11px;font-size:15px;background:#fff;font-family:inherit;
+  }
+  .fgroup textarea{min-height:90px;resize:vertical}
+  .starpick{display:flex;gap:6px;font-size:30px;color:#ddd;cursor:pointer}
+  .starpick span.on{color:var(--gold)}
+  .submit{
+    width:100%;background:var(--accent);color:#fff;border:none;border-radius:8px;
+    padding:14px;font-size:15px;font-weight:700;margin-top:8px;cursor:pointer;
+  }
+  .empty{padding:48px 20px;text-align:center;color:var(--sub);font-size:14px;line-height:1.8}
+  .empty .big{font-size:40px;margin-bottom:10px}
+  .loading{padding:30px;text-align:center;color:var(--sub);font-size:13px}
+  .spinner{
+    width:26px;height:26px;border:3px solid #eee;border-top-color:var(--accent);border-radius:50%;
+    margin:0 auto 10px;animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .toast{
+    position:fixed;bottom:calc(var(--nav-h) + 20px);left:50%;transform:translateX(-50%);
+    background:rgba(40,40,40,.92);color:#fff;font-size:13px;padding:10px 20px;border-radius:999px;
+    z-index:4000;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;
+  }
+  .toast.show{opacity:1}
+  .award{
+    margin:0 14px 14px;background:#1e1e1e;color:#cfa75a;border-radius:8px;text-align:center;
+    padding:22px 10px;font-size:13px;letter-spacing:2px;line-height:2;
+  }
+  .award .t{font-size:17px;font-weight:700;letter-spacing:4px}
+</style>
+</head>
+<body>
+
+<!-- ============ 探す ============ -->
+<section class="screen active" id="scr-search">
+  <div class="topbar">
+    <button class="searchbox" onclick="openAreaSearch()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+      <span id="searchPlaceholder">お店・エリアを検索</span>
+    </button>
+    <button class="hamburger" onclick="toast('メニューは準備中です')"><span></span><span></span><span></span></button>
+  </div>
+  <div class="arealinks" id="areaLinks"></div>
+  <div class="mapwrap">
+    <div id="map"></div>
+    <div class="map-chips chips" id="genreChips"></div>
+    <button class="research" id="researchBtn" onclick="searchHere()">このエリアで再検索</button>
+  </div>
+  <div class="netyoyaku">
+    <span class="tag">📅 ネット予約</span>
+    <input type="date" id="quickDate">
+    <select id="quickPeople"><option value="2">2名</option><option value="3">3名</option><option value="4">4名</option><option value="6">6名</option><option value="8">8名</option></select>
+  </div>
+  <div class="chips" id="filterChips"></div>
+  <div class="countbar">
+    <div>
+      <div class="where" id="whereLabel">現在地</div>
+      <div class="num"><span id="hitCount">0</span>件</div>
+    </div>
+    <button class="sortbtn" onclick="toggleSort()">⇅ <span id="sortLabel">標準</span></button>
+  </div>
+  <div id="shopList"><div class="loading"><div class="spinner"></div>お店を読み込み中…</div></div>
+</section>
+
+<!-- ============ 保存リスト ============ -->
+<section class="screen" id="scr-saved">
+  <div class="topbar">
+    <button class="searchbox" onclick="toast('保存リスト内検索は準備中です')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+      保存したお店から検索
+    </button>
+    <button class="hamburger" onclick="toast('メニューは準備中です')"><span></span><span></span><span></span></button>
+  </div>
+  <div id="savedMap"></div>
+  <div class="chips" id="savedChips"></div>
+  <div class="countbar">
+    <div><div class="num"><span id="savedCount">0</span>件</div></div>
+    <button class="sortbtn">⇅ 保存日順</button>
+  </div>
+  <div id="savedList"></div>
+</section>
+
+<!-- ============ タイムライン ============ -->
+<section class="screen" id="scr-timeline">
+  <div class="subtabs">
+    <button class="on">口コミ</button>
+    <button onclick="toast('マガジンは準備中です')">グルメマガジン</button>
+  </div>
+  <div class="chips" id="tlChips"></div>
+  <div class="timestamp-bar" id="tlUpdated"></div>
+  <div id="timelineList"></div>
+  <div class="award"><div>THE GOURMET</div><div class="t">AWARD <span id="awardYear"></span></div><div>受賞店発表</div></div>
+</section>
+
+<!-- ============ 閲覧履歴 ============ -->
+<section class="screen" id="scr-history">
+  <div class="topbar"><div class="title">閲覧履歴</div>
+    <button class="hamburger" onclick="toast('メニューは準備中です')" style="position:absolute;right:12px"><span></span><span></span><span></span></button>
+  </div>
+  <div class="hist-head">
+    <span class="t">最近見たお店</span>
+    <button onclick="clearHistory()">すべて削除</button>
+  </div>
+  <div id="historyList"></div>
+</section>
+
+<!-- ============ 予約一覧 ============ -->
+<section class="screen" id="scr-resv">
+  <div class="topbar"><div class="title">予約一覧</div>
+    <button class="hamburger" onclick="toast('メニューは準備中です')" style="position:absolute;right:12px"><span></span><span></span><span></span></button>
+  </div>
+  <div class="subtabs">
+    <button class="on" id="resvTabA" onclick="setResvTab('active')">来店前・来店済み</button>
+    <button id="resvTabC" onclick="setResvTab('cancel')">キャンセル</button>
+  </div>
+  <div id="resvList"></div>
+</section>
+
+<!-- ============ 下部ナビ ============ -->
+<nav class="bottom">
+  <button data-tab="search" class="on" onclick="setTab('search')">
+    <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>探す
+  </button>
+  <button data-tab="saved" onclick="setTab('saved')">
+    <svg viewBox="0 0 24 24"><path d="M17 3H7a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2z"/></svg>保存リスト
+  </button>
+  <button data-tab="timeline" onclick="setTab('timeline')">
+    <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7z"/></svg>タイムライン
+    <span class="dot" id="tlDot" style="display:none"></span>
+  </button>
+  <button data-tab="history" onclick="setTab('history')">
+    <svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.9 3.9L9 12H6a7 7 0 1 1 7 7 6.9 6.9 0 0 1-4.9-2L6.7 18.4A9 9 0 1 0 13 3zm-1 5v5l4.3 2.5.7-1.2-3.5-2.1V8z"/></svg>閲覧履歴
+  </button>
+  <button data-tab="resv" onclick="setTab('resv')">
+    <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 16H5V10h14zm-9.2-2.2L7 15l1.4-1.4 1.4 1.4 3.8-3.8L15 12.6z"/></svg>予約一覧
+  </button>
+</nav>
+
+<!-- ============ 詳細シート ============ -->
+<div class="sheet-bg" id="sheetBg" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet" style="display:none">
+  <div class="grab"></div>
+  <div class="inner" id="sheetBody"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* =========================================================
+   食べログ風グルメアプリ
+   ・店舗データ : OpenStreetMap Overpass API(実データ)
+   ・地名検索   : Nominatim
+   ・地図       : Leaflet + OSM タイル
+   ・保存/履歴/予約/口コミ : localStorage
+========================================================= */
+
+const OVERPASS = 'https://overpass-api.de/api/interpreter';
+const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
+const DEFAULT_POS = [35.6745, 139.7630]; // 有楽町付近
+
+const GENRES = [
+  {label:'居酒屋', emoji:'🏮', match:t=>/izakaya|sake/.test(t.cuisine||'') || t.amenity==='pub' || t.amenity==='bar'},
+  {label:'カフェ', emoji:'☕', match:t=>t.amenity==='cafe' || /coffee|cafe/.test(t.cuisine||'')},
+  {label:'パン屋', emoji:'🥐', match:t=>t.shop==='bakery' || /bakery|sandwich/.test(t.cuisine||'')},
+  {label:'焼肉', emoji:'🥩', match:t=>/yakiniku|barbecue|bbq|korean/.test(t.cuisine||'')},
+  {label:'寿司', emoji:'🍣', match:t=>/sushi|seafood|fish/.test(t.cuisine||'')},
+  {label:'イタリアン', emoji:'🍝', match:t=>/italian|pizza|pasta/.test(t.cuisine||'')},
+  {label:'ラーメン', emoji:'🍜', match:t=>/ramen|noodle/.test(t.cuisine||'')},
+  {label:'中華', emoji:'🥟', match:t=>/chinese|gyoza/.test(t.cuisine||'')},
+];
+const CUISINE_JA = {
+  japanese:'日本料理', sushi:'寿司', ramen:'ラーメン', izakaya:'居酒屋', yakiniku:'焼肉',
+  italian:'イタリアン', pizza:'ピザ', french:'フレンチ', chinese:'中華料理', korean:'韓国料理',
+  indian:'インド料理', thai:'タイ料理', seafood:'海鮮', steak_house:'ステーキ', burger:'ハンバーガー',
+  coffee_shop:'喫茶店', cafe:'カフェ', bakery:'パン', curry:'カレー', udon:'うどん', soba:'そば',
+  noodle:'麺類', barbecue:'焼肉・BBQ', fried_chicken:'唐揚げ', tempura:'天ぷら', tonkatsu:'とんかつ',
+  okonomiyaki:'お好み焼き', takoyaki:'たこ焼き', kebab:'ケバブ', vietnamese:'ベトナム料理',
+  yakitori:'焼き鳥', oden:'おでん', donburi:'丼もの', unagi:'うなぎ', kaiseki:'懐石', sake:'日本酒バー',
+  wine_bar:'ワインバー', tea:'茶房', juice:'ジュース', crepe:'クレープ', sweets:'スイーツ',
+  mexican:'メキシコ料理', spanish:'スペイン料理', american:'アメリカ料理', dessert:'スイーツ',
+  ice_cream:'アイス', sandwich:'サンドイッチ', breakfast:'モーニング', regional:'郷土料理',
+  international:'多国籍料理', asian:'アジア料理', fish:'魚介', chicken:'鶏料理', teppanyaki:'鉄板焼き',
+};
+const AMENITY_JA = {restaurant:'レストラン', cafe:'カフェ', fast_food:'ファストフード', bar:'バー', pub:'居酒屋・パブ', food_court:'フードコート', ice_cream:'アイスクリーム'};
+const PH_COLORS = ['#b7793f','#8d6e63','#a35d2a','#7d8c5c','#9a6b8f','#5c7d8c','#b3552e','#6b705c'];
+const PH_EMOJI = {'居酒屋':'🏮','カフェ':'☕','パン屋':'🥐','焼肉':'🥩','寿司':'🍣','イタリアン':'🍝','ラーメン':'🍜','中華':'🥟'};
+
+/* ---------- 状態 ---------- */
+let map, savedMap, markers = [], savedMarkers = [];
+let shops = [];               // 現在の検索結果
+let centerPos = DEFAULT_POS;  // 検索中心
+let activeGenre = null;
+let activeFilters = new Set();
+let sortMode = 'standard';
+let resvTab = 'active';
+let starValue = 3;
+
+const store = {
+  get(k, d){ try{ return JSON.parse(localStorage.getItem('gourmet_'+k)) ?? d; }catch(e){ return d; } },
+  set(k, v){ localStorage.setItem('gourmet_'+k, JSON.stringify(v)); },
+};
+let saved    = store.get('saved', {});        // id -> shop
+let history_ = store.get('history', []);      // [{shop, date}]
+let resvs    = store.get('resv', []);         // [{id, shop, date, time, people, no, status}]
+let reviews  = store.get('reviews', []);      // [{shop, stars, price, title, body, date, likes, liked}]
+
+/* ---------- ユーティリティ ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._tm); t._tm = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function dist(a, b){
+  const R=6371e3, toR=x=>x*Math.PI/180;
+  const dLat=toR(b[0]-a[0]), dLng=toR(b[1]-a[1]);
+  const h=Math.sin(dLat/2)**2 + Math.cos(toR(a[0]))*Math.cos(toR(b[0]))*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+function distLabel(m){
+  const walk = Math.max(1, Math.round(m/80));
+  return m < 1000 ? `${Math.round(m/10)*10}m(徒歩${walk}分)` : `${(m/1000).toFixed(1)}km`;
+}
+// 店名から決定的に参考スコア(3.0〜3.8)を生成 ※実際の評価ではありません
+function pseudoScore(name){
+  let h = 0; for(const c of name) h = (h*31 + c.charCodeAt(0)) >>> 0;
+  return (3.0 + (h % 81) / 100).toFixed(2);
+}
+function pseudoBudget(name){
+  let h = 0; for(const c of name) h = (h*17 + c.charCodeAt(0)) >>> 0;
+  const bands = [[1000,1999],[2000,2999],[3000,3999],[4000,4999],[5000,5999]];
+  const d = bands[h % bands.length], l = bands[Math.max(0,(h % bands.length)-2)];
+  return {dinner:`￥${d[0].toLocaleString()}〜￥${d[1].toLocaleString()}`, lunch:`￥${l[0].toLocaleString()}〜￥${l[1].toLocaleString()}`};
+}
+function starsHtml(score){
+  const n = Math.round(parseFloat(score));
+  return '★'.repeat(Math.min(5,Math.max(0,n))) + '☆'.repeat(5-Math.min(5,Math.max(0,n)));
+}
+function phColor(name){
+  let h = 0; for(const c of name) h = (h*7 + c.charCodeAt(0)) >>> 0;
+  return PH_COLORS[h % PH_COLORS.length];
+}
+function shopEmoji(s){
+  for(const g of GENRES) if(g.match(s.tags||{})) return PH_EMOJI[g.label] || '🍽';
+  if(s.tags?.amenity === 'cafe') return '☕';
+  return '🍽';
+}
+function genreLabel(s){
+  const t = s.tags || {};
+  const parts = [];
+  if(t.cuisine){
+    t.cuisine.split(';').slice(0,3).forEach(c=>{
+      parts.push(CUISINE_JA[c.trim()] || c.trim());
+    });
+  }
+  if(!parts.length) parts.push(AMENITY_JA[t.amenity] || (t.shop==='bakery'?'パン':'飲食店'));
+  return parts.join('、');
+}
+
+/* ---------- 地図 ---------- */
+function initMap(){
+  if(typeof L === 'undefined'){
+    $('#map').innerHTML = '<div class="empty" style="padding:30px">地図を読み込めませんでした(オフライン?)<br>お店リストはそのまま利用できます。</div>';
+    return;
+  }
+  map = L.map('map', {zoomControl:false}).setView(DEFAULT_POS, 15);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19,
+  }).addTo(map);
+  map.on('moveend', ()=>{ $('#researchBtn').style.display = 'block'; });
+}
+function pinIcon(active){
+  return L.divIcon({
+    className:'',
+    html:`<div style="width:30px;height:30px;background:${active?'#c8580c':'#e8650d'};border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 5px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center">
+      <span style="transform:rotate(45deg);font-size:13px">🍴</span></div>`,
+    iconSize:[30,30], iconAnchor:[15,30],
+  });
+}
+function renderPins(list){
+  if(!map) return;
+  markers.forEach(m=>map.removeLayer(m)); markers = [];
+  list.slice(0,50).forEach(s=>{
+    const m = L.marker([s.lat, s.lng], {icon:pinIcon(false)}).addTo(map);
+    m.on('click', ()=>openShop(s.id));
+    markers.push(m);
+  });
+}
+
+/* ---------- 店舗取得(Overpass) ---------- */
+async function fetchShops(lat, lng, radius=1200){
+  $('#shopList').innerHTML = '<div class="loading"><div class="spinner"></div>お店を読み込み中…</div>';
+  const q = `[out:json][timeout:25];
+(
+  node["amenity"~"restaurant|cafe|fast_food|bar|pub|food_court"]["name"](around:${radius},${lat},${lng});
+  way["amenity"~"restaurant|cafe|fast_food|bar|pub|food_court"]["name"](around:${radius},${lat},${lng});
+  node["shop"="bakery"]["name"](around:${radius},${lat},${lng});
+  way["shop"="bakery"]["name"](around:${radius},${lat},${lng});
+);
+out center 80;`;
+  try{
+    const res = await fetch(OVERPASS, {method:'POST', body:'data='+encodeURIComponent(q)});
+    if(!res.ok) throw new Error('Overpass error '+res.status);
+    const data = await res.json();
+    shops = (data.elements||[])
+      .map(el=>{
+        const la = el.lat ?? el.center?.lat, lo = el.lon ?? el.center?.lon;
+        if(la == null) return null;
+        return {
+          id: el.type + el.id,
+          name: el.tags.name,
+          lat: la, lng: lo,
+          tags: el.tags,
+          d: dist([lat,lng],[la,lo]),
+        };
+      })
+      .filter(Boolean)
+      .sort((a,b)=>a.d-b.d);
+    centerPos = [lat, lng];
+    renderShopList();
+    renderPins(filteredShops());
+  }catch(e){
+    console.error(e);
+    $('#shopList').innerHTML = `<div class="empty"><div class="big">⚠️</div>お店の取得に失敗しました。<br>通信環境をご確認のうえ、地図を動かして<br>「このエリアで再検索」をお試しください。</div>`;
+  }
+}
+function filteredShops(){
+  let list = shops;
+  if(activeGenre){
+    const g = GENRES.find(x=>x.label===activeGenre);
+    list = list.filter(s=>g.match(s.tags));
+  }
+  if(sortMode === 'name') list = [...list].sort((a,b)=>a.name.localeCompare(b.name,'ja'));
+  return list;
+}
+
+/* ---------- 探すタブ描画 ---------- */
+function shopCardHtml(s, opts={}){
+  const score = pseudoScore(s.name);
+  const b = pseudoBudget(s.name);
+  const isSaved = !!saved[s.id];
+  const photos = [0,1,2,3].map(i=>{
+    const c = phColor(s.name + i);
+    return `<div class="ph" style="background:linear-gradient(135deg,${c},${c}cc)">${shopEmoji(s)}</div>`;
+  }).join('');
+  return `<div class="card" onclick="openShop('${s.id}')">
+    <div class="cardbtns">
+      <button class="iconbtn" onclick="event.stopPropagation();toast('「行きたい」は準備中です')">♡</button>
+      <button class="iconbtn ${isSaved?'saved':''}" onclick="event.stopPropagation();toggleSave('${s.id}')">${isSaved?'🔖':'🏷'}</button>
+    </div>
+    <h3>${esc(s.name)}</h3>
+    <div class="meta">${opts.savedDate ? `保存日 ${opts.savedDate}` : `現在地から${distLabel(s.d)}`} / ${esc(genreLabel(s))}</div>
+    <div class="photos">${photos}</div>
+    <div class="scorewrap"><span class="stars">${starsHtml(score)}</span><span class="score">${score}</span><span style="color:#999;font-size:11px">参考スコア</span></div>
+    <div class="budget"><span>🌙 <span class="yen">${b.dinner}</span></span><span>☀️ <span class="yen lunch">${b.lunch}</span></span></div>
+    ${s.tags['opening_hours'] ? `<div class="desc">営業時間: ${esc(s.tags['opening_hours'])}</div>` : ''}
+  </div>`;
+}
+function renderShopList(){
+  const list = filteredShops();
+  $('#hitCount').textContent = list.length;
+  $('#shopList').innerHTML = list.length
+    ? list.slice(0,40).map(s=>shopCardHtml(s)).join('')
+    : '<div class="empty"><div class="big">🔍</div>条件に合うお店が見つかりませんでした。<br>ジャンルを変えるか、地図を動かして再検索してください。</div>';
+  renderPins(list);
+}
+function renderGenreChips(){
+  $('#genreChips').innerHTML = GENRES.map(g=>
+    `<button class="chip ${activeGenre===g.label?'on':''}" onclick="setGenre('${g.label}')">${g.label}</button>`).join('');
+}
+function setGenre(label){
+  activeGenre = activeGenre === label ? null : label;
+  renderGenreChips(); renderShopList();
+}
+function renderFilterChips(){
+  const fs = ['予算','ランチ','個室','飲み放題','百名店'];
+  $('#filterChips').innerHTML = `<button class="chip" onclick="toast('絞り込みは準備中です')">⚙ 絞り込み</button>` +
+    fs.map(f=>`<button class="chip ${activeFilters.has(f)?'on':''}" onclick="toggleFilter('${f}')">${f}</button>`).join('');
+}
+function toggleFilter(f){
+  activeFilters.has(f) ? activeFilters.delete(f) : activeFilters.add(f);
+  renderFilterChips(); renderShopList();
+  if(activeFilters.has(f)) toast(`「${f}」で絞り込み(参考)`);
+}
+function toggleSort(){
+  sortMode = sortMode === 'standard' ? 'name' : 'standard';
+  $('#sortLabel').textContent = sortMode === 'standard' ? '標準' : '店名順';
+  renderShopList();
+}
+function searchHere(){
+  $('#researchBtn').style.display = 'none';
+  if(!map){ fetchShops(...centerPos); return; }
+  const c = map.getCenter();
+  $('#whereLabel').textContent = '地図の中心';
+  fetchShops(c.lat, c.lng);
+}
+
+/* ---------- エリア検索(Nominatim) ---------- */
+const AREAS = ['全国','有楽町駅','新橋駅','横浜市','横浜駅','桜木町','渋谷駅','新宿駅'];
+function renderAreaLinks(){
+  $('#areaLinks').innerHTML = AREAS.map(a=>`<button onclick="goArea('${a}')">${a}</button>`).join('');
+}
+async function goArea(name){
+  if(name === '全国'){ if(map) map.setView([36.2,138.5], 5); return; }
+  await geocodeAndSearch(name);
+}
+function openAreaSearch(){
+  const q = prompt('エリア名・駅名・お店のキーワードを入力してください\n(例: 有楽町駅、横浜 中華街)');
+  if(q) geocodeAndSearch(q);
+}
+async function geocodeAndSearch(q){
+  toast(`「${q}」を検索中…`);
+  try{
+    const url = `${NOMINATIM}?format=json&limit=1&countrycodes=jp&q=${encodeURIComponent(q)}`;
+    const res = await fetch(url, {headers:{'Accept-Language':'ja'}});
+    const js = await res.json();
+    if(!js.length){ toast('場所が見つかりませんでした'); return; }
+    const {lat, lon, display_name} = js[0];
+    $('#searchPlaceholder').textContent = q;
+    $('#whereLabel').textContent = display_name.split(',')[0];
+    if(map) map.setView([+lat, +lon], 16);
+    $('#researchBtn').style.display = 'none';
+    fetchShops(+lat, +lon);
+  }catch(e){ toast('検索に失敗しました'); }
+}
+
+/* ---------- 詳細シート ---------- */
+function findShop(id){
+  return shops.find(s=>s.id===id) || saved[id] ||
+         history_.map(h=>h.shop).find(s=>s.id===id) || null;
+}
+function openShop(id){
+  const s = findShop(id);
+  if(!s) return;
+  // 履歴に追加(先頭・重複除去・最大50件)
+  history_ = [{shop:s, date:new Date().toISOString()}, ...history_.filter(h=>h.shop.id!==id)].slice(0,50);
+  store.set('history', history_);
+  renderHistory();
+
+  const score = pseudoScore(s.name), b = pseudoBudget(s.name), t = s.tags||{};
+  const isSaved = !!saved[id];
+  const addr = [t['addr:province'],t['addr:city'],t['addr:quarter'],t['addr:neighbourhood'],t['addr:block_number'],t['addr:housenumber']].filter(Boolean).join('') || '住所情報なし(OpenStreetMap)';
+  $('#sheetBody').innerHTML = `
+    <h2>${esc(s.name)}</h2>
+    <div class="genre">${esc(genreLabel(s))}</div>
+    <div class="scorewrap"><span class="stars">${starsHtml(score)}</span><span class="score">${score}</span><span style="color:#999;font-size:11px">参考スコア</span></div>
+    <div class="budget" style="margin:6px 0 10px"><span>🌙 <span class="yen">${b.dinner}</span></span><span>☀️ <span class="yen lunch">${b.lunch}</span></span></div>
+    <div class="photos" style="display:flex;gap:4px;border-radius:8px;overflow:hidden;margin-bottom:6px">
+      ${[0,1,2].map(i=>`<div class="ph" style="background:linear-gradient(135deg,${phColor(s.name+i)},${phColor(s.name+i)}cc)">${shopEmoji(s)}</div>`).join('')}
+    </div>
+    <div class="infrow"><span class="k">住所</span><span>${esc(addr)}</span></div>
+    ${t.phone||t['contact:phone'] ? `<div class="infrow"><span class="k">電話</span><a href="tel:${esc(t.phone||t['contact:phone'])}">${esc(t.phone||t['contact:phone'])}</a></div>`:''}
+    ${t.opening_hours ? `<div class="infrow"><span class="k">営業時間</span><span>${esc(t.opening_hours)}</span></div>`:''}
+    ${t.website||t['contact:website'] ? `<div class="infrow"><span class="k">Web</span><a href="${esc(t.website||t['contact:website'])}" target="_blank" rel="noopener">公式サイト</a></div>`:''}
+    <div class="infrow"><span class="k">地図</span><a href="https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}" target="_blank" rel="noopener">Google マップで開く</a></div>
+    <div class="actions">
+      <button class="${isSaved?'saved-on':''}" onclick="toggleSave('${id}');openShop('${id}')">${isSaved?'🔖 保存済み':'🏷 保存する'}</button>
+      <button onclick="openReviewForm('${id}')">✏️ 口コミ</button>
+      <button class="primary" onclick="openResvForm('${id}')">📅 ネット予約</button>
+    </div>`;
+  showSheet();
+}
+function showSheet(){ $('#sheetBg').classList.add('open'); $('#sheet').style.display='block'; }
+function closeSheet(){ $('#sheetBg').classList.remove('open'); $('#sheet').style.display='none'; }
+
+/* ---------- 保存リスト ---------- */
+function toggleSave(id){
+  const s = findShop(id);
+  if(!s) return;
+  if(saved[id]){ delete saved[id]; toast('保存を解除しました'); }
+  else { saved[id] = {...s, savedAt:new Date().toISOString()}; toast('保存リストに追加しました'); }
+  store.set('saved', saved);
+  renderShopList(); renderSaved();
+}
+function renderSaved(){
+  const list = Object.values(saved).sort((a,b)=>(b.savedAt||'').localeCompare(a.savedAt||''));
+  $('#savedCount').textContent = list.length;
+  $('#savedChips').innerHTML = ['行った','行っていない','予算','コレクション'].map(c=>
+    `<button class="chip" onclick="toast('「${c}」絞り込みは準備中です')">${c}</button>`).join('');
+  $('#savedList').innerHTML = list.length
+    ? list.map(s=>shopCardHtml(s, {savedDate:(s.savedAt||'').slice(0,10).replace(/-/g,'/')})).join('')
+    : '<div class="empty"><div class="big">🔖</div>保存したお店はまだありません。<br>「探す」からお店を保存できます。</div>';
+  if(savedMap){
+    savedMarkers.forEach(m=>savedMap.removeLayer(m)); savedMarkers = [];
+    list.forEach(s=>{
+      const m = L.marker([s.lat,s.lng], {icon:pinIcon(true)}).addTo(savedMap);
+      m.on('click', ()=>openShop(s.id));
+      savedMarkers.push(m);
+    });
+    if(list.length){
+      savedMap.fitBounds(L.latLngBounds(list.map(s=>[s.lat,s.lng])).pad(0.3), {maxZoom:15});
+    } else {
+      savedMap.setView([36.2,138.5], 5);
+    }
+  }
+}
+function initSavedMap(){
+  if(typeof L === 'undefined') return;
+  if(savedMap) { savedMap.invalidateSize(); return; }
+  savedMap = L.map('savedMap', {zoomControl:false}).setView([36.2,138.5], 5);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'&copy; OpenStreetMap', maxZoom:19,
+  }).addTo(savedMap);
+  renderSaved();
+}
+
+/* ---------- 閲覧履歴 ---------- */
+function renderHistory(){
+  $('#historyList').innerHTML = history_.length
+    ? history_.map(h=>{
+        const s = h.shop;
+        const d = new Date(h.date);
+        return shopCardHtml(s).replace(/<\/div>$/,
+          `<div class="hist-date">閲覧日 ${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}</div></div>`);
+      }).join('')
+    : '<div class="empty"><div class="big">🕐</div>最近見たお店はありません。</div>';
+}
+function clearHistory(){
+  if(!history_.length) return;
+  if(confirm('閲覧履歴をすべて削除しますか?')){
+    history_ = []; store.set('history', history_); renderHistory(); toast('閲覧履歴を削除しました');
+  }
+}
+
+/* ---------- 予約 ---------- */
+function openResvForm(id){
+  const s = findShop(id); if(!s) return;
+  const today = new Date(); today.setDate(today.getDate()+1);
+  const def = today.toISOString().slice(0,10);
+  $('#sheetBody').innerHTML = `
+    <h2 style="font-size:17px">📅 ネット予約</h2>
+    <div class="genre">${esc(s.name)}</div>
+    <div class="fgroup"><label>日付</label><input type="date" id="rDate" value="${def}"></div>
+    <div class="fgroup"><label>時間</label><select id="rTime">
+      ${['17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00'].map(t=>`<option ${t==='19:00'?'selected':''}>${t}</option>`).join('')}
+    </select></div>
+    <div class="fgroup"><label>人数</label><select id="rPeople">
+      ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<option ${n===2?'selected':''} value="${n}">${n}名</option>`).join('')}
+    </select></div>
+    <button class="submit" onclick="submitResv('${id}')">この内容で予約する</button>
+    <p style="font-size:11px;color:#999;margin-top:10px;line-height:1.6">※ このアプリはデモのため、実際のお店への予約は行われません。予約内容は端末内に保存されます。</p>`;
+  showSheet();
+}
+function resvNo(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ123456789';
+  return Array.from({length:10}, ()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+function submitResv(id){
+  const s = findShop(id); if(!s) return;
+  const date = $('#rDate').value, time = $('#rTime').value, people = $('#rPeople').value;
+  if(!date){ toast('日付を選択してください'); return; }
+  resvs.unshift({id:'r'+Date.now(), shop:s, date, time, people:+people, no:resvNo(), status:'active', createdAt:new Date().toISOString()});
+  store.set('resv', resvs);
+  closeSheet(); renderResv(); setTab('resv');
+  toast('予約を登録しました');
+}
+function weekdayJa(dateStr){
+  return ['日','月','火','水','木','金','土'][new Date(dateStr+'T00:00').getDay()];
+}
+function setResvTab(t){
+  resvTab = t;
+  $('#resvTabA').classList.toggle('on', t==='active');
+  $('#resvTabC').classList.toggle('on', t==='cancel');
+  renderResv();
+}
+function renderResv(){
+  const now = new Date();
+  const list = resvs.filter(r => resvTab==='cancel' ? r.status==='cancel' : r.status!=='cancel');
+  $('#resvList').innerHTML = list.length
+    ? list.map(r=>{
+        const visited = new Date(`${r.date}T${r.time}`) < now;
+        const badge = r.status==='cancel'
+          ? '<span class="badge cancel">キャンセル</span>'
+          : visited ? '<span class="badge">来店済み</span>' : '<span class="badge before">来店前</span>';
+        const d = new Date(r.date+'T00:00');
+        return `<div class="resv">
+          <div class="head">
+            <div class="thumb" style="background:linear-gradient(135deg,${phColor(r.shop.name)},${phColor(r.shop.name)}cc)">${shopEmoji(r.shop)}</div>
+            <div>
+              <div class="name" onclick="openShop('${r.shop.id}')">${esc(r.shop.name)}</div>
+              <div class="sub">${esc(genreLabel(r.shop))}</div>
+            </div>
+            <button class="mapbtn" onclick="window.open('https://www.google.com/maps/search/?api=1&query=${r.shop.lat},${r.shop.lng}')">地図</button>
+          </div>
+          <table>
+            <tr><th>ステータス</th><td>${badge}</td></tr>
+            <tr><th>予約種別</th><td>ネット予約</td></tr>
+            <tr><th>予約日時</th><td>${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日(${weekdayJa(r.date)}) ${r.time}</td></tr>
+            <tr><th>人数</th><td>${r.people}名</td></tr>
+            <tr><th>予約番号</th><td>${r.no}</td></tr>
+          </table>
+          ${r.status!=='cancel' && !visited ? `<button class="bigbtn" onclick="cancelResv('${r.id}')">予約をキャンセルする</button>` : `<button class="bigbtn" onclick="toast('予約番号: ${r.no}')">ご予約内容の確認</button>`}
+          <div class="duo">
+            <button onclick="openResvForm('${r.shop.id}')">もう一度予約</button>
+            <button onclick="openReviewForm('${r.shop.id}')">口コミを投稿</button>
+          </div>
+        </div>`;
+      }).join('')
+    : `<div class="empty"><div class="big">🗓</div>${resvTab==='cancel'?'キャンセルした予約はありません。':'予約はまだありません。<br>お店の詳細から「ネット予約」ができます。'}</div>`;
+}
+function cancelResv(rid){
+  const r = resvs.find(x=>x.id===rid); if(!r) return;
+  if(confirm(`「${r.shop.name}」の予約をキャンセルしますか?`)){
+    r.status = 'cancel'; store.set('resv', resvs); renderResv(); toast('予約をキャンセルしました');
+  }
+}
+
+/* ---------- 口コミ(タイムライン) ---------- */
+function openReviewForm(id){
+  const s = findShop(id); if(!s) return;
+  starValue = 3;
+  $('#sheetBody').innerHTML = `
+    <h2 style="font-size:17px">✏️ 口コミを投稿</h2>
+    <div class="genre">${esc(s.name)}</div>
+    <div class="fgroup"><label>評価</label>
+      <div class="starpick" id="starPick">${[1,2,3,4,5].map(n=>`<span data-v="${n}" class="${n<=3?'on':''}" onclick="pickStar(${n})">★</span>`).join('')}</div>
+    </div>
+    <div class="fgroup"><label>1人あたりの予算</label><select id="vPrice">
+      ${['〜￥999','￥1,000〜￥1,999','￥2,000〜￥2,999','￥3,000〜￥3,999','￥4,000〜￥4,999','￥5,000〜￥5,999','￥6,000〜￥7,999','￥8,000〜'].map((p,i)=>`<option ${i===3?'selected':''}>${p}</option>`).join('')}
+    </select></div>
+    <div class="fgroup"><label>タイトル</label><input id="vTitle" placeholder="例: 美味しい焼き肉屋さん"></div>
+    <div class="fgroup"><label>本文</label><textarea id="vBody" placeholder="お店の感想を書きましょう"></textarea></div>
+    <button class="submit" onclick="submitReview('${id}')">投稿する</button>`;
+  showSheet();
+}
+function pickStar(n){
+  starValue = n;
+  document.querySelectorAll('#starPick span').forEach(el=>el.classList.toggle('on', +el.dataset.v <= n));
+}
+function submitReview(id){
+  const s = findShop(id); if(!s) return;
+  const body = $('#vBody').value.trim();
+  if(!body){ toast('本文を入力してください'); return; }
+  reviews.unshift({
+    shop:s, stars:starValue, price:$('#vPrice').value,
+    title:$('#vTitle').value.trim() || '口コミ', body,
+    date:new Date().toISOString(), likes:0, liked:false,
+  });
+  store.set('reviews', reviews);
+  closeSheet(); renderTimeline(); setTab('timeline');
+  $('#tlDot').style.display = 'none';
+  toast('口コミを投稿しました');
+}
+function renderTimeline(){
+  $('#tlChips').innerHTML = ['全国','✓ 現在地','東京','神奈川'].map((c,i)=>
+    `<button class="chip ${i===1?'on':''}" onclick="toast('地域絞り込みは準備中です')">${c}</button>`).join('');
+  $('#tlUpdated').textContent = reviews.length ? timeAgo(reviews[0].date) + ' 更新' : '';
+  $('#timelineList').innerHTML = reviews.length
+    ? reviews.map((r,i)=>`<div class="review">
+        <div class="who">
+          <div class="avatar" style="background:linear-gradient(135deg,#c98a4b,#a3672e)">😋</div>
+          <div><div class="uname">わたし</div><div class="ucount">口コミ ${reviews.length}件</div></div>
+          <button class="follow" onclick="toast('自分はフォローできません')">フォローする</button>
+        </div>
+        <div class="shop" onclick="openShop('${r.shop.id}')">${esc(r.shop.name)}</div>
+        <div class="shopmeta">${esc(genreLabel(r.shop))}</div>
+        <div class="visit">1回目</div>
+        <div class="scorewrap"><span class="stars">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</span><span class="score">${r.stars}.0</span><span style="color:#555;font-size:12px">${esc(r.price)}/1人</span></div>
+        <div class="rtitle">${esc(r.title)}</div>
+        <div class="body">${esc(r.body)}</div>
+        ${r.likes ? `<div class="likecount">❤ ${r.likes}</div>` : ''}
+        <div class="reactions">
+          <button class="${r.liked?'liked':''}" onclick="likeReview(${i})">${r.liked?'❤':'♡'} いいね!</button>
+          <button onclick="toast('コメントは準備中です')">💬 コメント</button>
+          <button onclick="toggleSave('${r.shop.id}')">🏷 お店を保存</button>
+        </div>
+      </div>`).join('')
+    : '<div class="empty"><div class="big">📝</div>口コミはまだありません。<br>お店の詳細やご予約から「口コミを投稿」できます。</div>';
+}
+function likeReview(i){
+  const r = reviews[i];
+  r.liked = !r.liked;
+  r.likes = Math.max(0, (r.likes||0) + (r.liked?1:-1));
+  store.set('reviews', reviews);
+  renderTimeline();
+}
+function timeAgo(iso){
+  const m = Math.floor((Date.now() - new Date(iso)) / 60000);
+  if(m < 1) return 'たった今';
+  if(m < 60) return `${m}分前`;
+  if(m < 1440) return `${Math.floor(m/60)}時間前`;
+  return `${Math.floor(m/1440)}日前`;
+}
+
+/* ---------- タブ切替 ---------- */
+function setTab(tab){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $('#scr-'+(tab==='resv'?'resv':tab==='saved'?'saved':tab==='timeline'?'timeline':tab==='history'?'history':'search')).classList.add('active');
+  document.querySelectorAll('nav.bottom button').forEach(b=>b.classList.toggle('on', b.dataset.tab===tab));
+  closeSheet();
+  window.scrollTo(0,0);
+  if(tab==='saved'){ setTimeout(initSavedMap, 50); }
+  if(tab==='search' && map){ setTimeout(()=>map.invalidateSize(), 50); }
+}
+
+/* ---------- 初期化 ---------- */
+function init(){
+  initMap();
+  renderGenreChips();
+  renderFilterChips();
+  renderAreaLinks();
+  renderSaved();
+  renderHistory();
+  renderResv();
+  renderTimeline();
+  if(reviews.length) $('#tlDot').style.display = 'block';
+  $('#awardYear').textContent = new Date().getFullYear();
+  const d = new Date(); d.setDate(d.getDate()+1);
+  $('#quickDate').value = d.toISOString().slice(0,10);
+
+  // 現在地を取得して検索(拒否時は有楽町)
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      pos=>{
+        const p = [pos.coords.latitude, pos.coords.longitude];
+        if(map){
+          map.setView(p, 15);
+          $('#researchBtn').style.display = 'none';
+          L.circleMarker(p, {radius:7, color:'#fff', weight:2, fillColor:'#2a78d6', fillOpacity:1}).addTo(map);
+        }
+        fetchShops(p[0], p[1]);
+      },
+      ()=>{ $('#whereLabel').textContent = '有楽町駅周辺'; fetchShops(...DEFAULT_POS); },
+      {timeout:6000}
+    );
+  } else {
+    $('#whereLabel').textContent = '有楽町駅周辺';
+    fetchShops(...DEFAULT_POS);
+  }
+}
+init();
+</script>
+</body>
+</html>
