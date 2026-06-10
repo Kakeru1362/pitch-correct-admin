@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アプリ一覧</title>
+<style>
+  :root{--bg:#0e1116;--card:#171c24;--line:#2a323d;--txt:#e9eef5;--sub:#9aa7b6;--accent:#5b8cff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+    line-height:1.6;padding:24px 16px 60px}
+  .wrap{max-width:560px;margin:0 auto}
+  h1{font-size:22px;margin:8px 0 4px}
+  .sub{color:var(--sub);font-size:13px;margin-bottom:20px}
+  a.app{display:flex;align-items:center;gap:14px;text-decoration:none;color:var(--txt);
+    background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+  a.app:active{transform:scale(.99)}
+  .ic{font-size:30px;flex:0 0 auto}
+  .nm{font-size:16px;font-weight:700}
+  .ds{font-size:12px;color:var(--sub)}
+  .arrow{margin-left:auto;color:var(--sub)}
+  footer{color:var(--sub);font-size:11px;text-align:center;margin-top:24px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📱 アプリ一覧</h1>
+  <div class="sub">単一HTMLで動く実験的なミニアプリ集。</div>
+
+  <a class="app" href="alarm.html">
+    <span class="ic">⏰</span>
+    <span><span class="nm">サビ起き</span><br><span class="ds">好きな曲のサビから流れるミュージックアラーム</span></span>
+    <span class="arrow">›</span>
+  </a>
+
+  <a class="app" href="transit.html">
+    <span class="ic">🚃</span>
+    <span><span class="nm">乗換・経路検索</span><br><span class="ds">電車のルート検索アプリ</span></span>
+    <span class="arrow">›</span>
+  </a>
+
+  <a class="app" href="gourmet.html">
+    <span class="ic">🍜</span>
+    <span><span class="nm">グルメさがし</span><br><span class="ds">食べログ風のグルメ検索アプリ</span></span>
+    <span class="arrow">›</span>
+  </a>
+
+  <footer>各アプリのデータは端末内（localStorage / IndexedDB）に保存されます。</footer>
+</div>
+</body>
+</html>
