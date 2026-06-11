@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>神奈川エリア投資分析レポート（武蔵小杉・綱島・新川崎・東神奈川・上大岡）</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#1f2733; --sub:#5b6877; --line:#dde4ec; --bg:#f6f8fb; --card:#ffffff;
+    --accent:#2563eb; --warn:#b45309; --bad:#b91c1c; --good:#047857; --chip:#eef2f8;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);line-height:1.75;
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 80px}
+  header.rep{border-bottom:3px solid var(--accent);padding-bottom:16px;margin-bottom:28px}
+  h1{font-size:26px;margin:0 0 6px}
+  .meta{color:var(--sub);font-size:13px}
+  h2{font-size:20px;margin:48px 0 14px;padding:8px 12px;background:var(--accent);color:#fff;border-radius:6px}
+  h3{font-size:17px;margin:28px 0 10px;border-left:4px solid var(--accent);padding-left:10px}
+  h4{font-size:14.5px;margin:18px 0 6px}
+  p{margin:8px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin:14px 0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;background:#fff}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{background:#eef2f8;font-weight:700;white-space:nowrap}
+  td.num{text-align:right;white-space:nowrap}
+  .tablebox{overflow-x:auto;margin:12px 0}
+  .src{font-size:11.5px;color:var(--sub)}
+  .src a{color:var(--accent);text-decoration:none;word-break:break-all}
+  .na{color:var(--bad);font-weight:700}
+  .badge{display:inline-block;background:var(--chip);border:1px solid var(--line);border-radius:999px;
+    padding:1px 10px;font-size:12px;margin-right:6px;color:var(--sub)}
+  .badge.up{color:var(--good);border-color:var(--good)}
+  .badge.flat{color:var(--warn);border-color:var(--warn)}
+  .badge.risk{color:var(--bad);border-color:var(--bad)}
+  .alert{background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:14px 18px;margin:14px 0;font-size:14px}
+  .note{background:#eef6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 18px;margin:14px 0;font-size:13.5px}
+  .chartbox{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;margin:16px 0}
+  .chartbox .cap{font-size:12px;color:var(--sub);margin-top:8px}
+  canvas{max-height:380px}
+  ol.toc{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 14px 14px 38px;font-size:14px}
+  ol.toc a{color:var(--accent);text-decoration:none}
+  ul.cite{font-size:12px;color:var(--sub);padding-left:20px}
+  ul.cite a{color:var(--accent);text-decoration:none;word-break:break-all}
+  .score-big{font-size:22px;font-weight:800;color:var(--accent)}
+  footer{margin-top:48px;color:var(--sub);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
+  @media print{ h2{background:none;color:var(--ink);border-bottom:2px solid var(--ink);border-radius:0} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="rep">
+  <h1>神奈川エリア投資分析レポート</h1>
+  <div class="meta">
+    対象駅: 武蔵小杉 / 綱島 / 新川崎 / 東神奈川 / 上大岡 ｜
+    前提: 3〜5年保有・想定予算4,500万円前後・中古マンション2LDK〜3LDK（駅徒歩10分以内）<br>
+    作成日: 2026年6月11日 ｜ 作成: 不動産市場アナリスト（Claude Code） ｜
+    手法: Web公表情報の収集・整理（出典は各数値に明記）
+  </div>
+</header>
+
+<div class="alert">
+  <strong>⚠ データ取得に関する重要な注記</strong><br>
+  本レポート作成環境のネットワークポリシーにより、<b>不動産情報ライブラリAPI・e-Stat API・国土数値情報への直接アクセスはすべて遮断</b>されており（HTTP 403 / host_not_allowed、2026-06-11確認）、APIキーも未設定です。
+  そのため<b>フェーズ1のAPIデータ（取引価格の四半期時系列・㎡単価CAGRの厳密値・年齢階級別転入超過・誘導区域/浸水想定のGIS判定）は「取得不可」</b>です。
+  本レポートはWeb検索で確認できた公表情報（民間相場サイト・自治体公表・報道等）に基づく<b>暫定版</b>であり、相場数値は集計方法が各社で異なる参考値です。完全版に必要な作業は「<a href="#sec6">⑥取得不可データと人間タスク</a>」を参照してください。
+</div>
+
+<ol class="toc">
+  <li><a href="#sec1">エグゼクティブサマリー</a></li>
+  <li><a href="#sec2">駅別スコアマトリクス</a></li>
+  <li><a href="#sec3">駅ごとの詳細分析</a></li>
+  <li><a href="#sec4">損益分岐シミュレーション（3〜5年売却）</a></li>
+  <li><a href="#sec5">データソース一覧</a></li>
+  <li><a href="#sec6">取得不可データと人間タスク（TODO）</a></li>
+</ol>
+
+<!-- ===================== ① ===================== -->
+<h2 id="sec1">① エグゼクティブサマリー</h2>
+
+<div class="card">
+<p><b>総合評価（10点満点・加重）: 武蔵小杉 8.0 ＞ 綱島 6.4 ＞ 東神奈川 5.7 ＞ 新川崎 4.9 ＞ 上大岡 4.5</b></p>
+<p>ただし、この順位を予算制約と突き合わせると結論は変わります。</p>
+<ul>
+  <li><b>武蔵小杉はスコア首位だが予算4,500万円では事実上購入不可。</b>売出のボリュームゾーンは9,000万〜1.2億円に移行し、1.2億円超が売出の約3割と報じられています（<a class="src" href="https://news.livedoor.com/article/detail/30009205/">ライブドアニュース・市場分析</a>、取得日2026-06-11）。2LDK〜3LDK・徒歩10分以内は予算の2倍以上が必要です。</li>
+  <li><b>予算内で最有力は「東神奈川」と「綱島」。</b>東神奈川はファミリー向け相場3,876万円・坪単価3年前比+18%と価格モメンタムが強く（スムナラ）、神奈川区は2025年国勢調査速報で5年前比5,000人以上の人口増。綱島はファミリー向け相場3,197万円で、東急新横浜線開業（2023年）＋綱島駅東口再開発（2028年竣工予定）という明確な材料を持ちます。ただし綱島は<b>鶴見川の浸水想定（駅周辺0.5〜3m、東部3〜5m）が5駅で最も重いリスク</b>です。</li>
+  <li><b>新川崎</b>は70㎡換算5,490万円と予算をやや超過し、かつ新規再開発パイプラインが確認できず、相鉄直通も通過扱い。中立〜見送り寄り。</li>
+  <li><b>上大岡</b>は平均2,462万円と予算面の余裕は最大ですが、港南区は2020年をピークに人口減少へ転じ（50年後約4割減の市推計）、過去10年の価格上昇は+1.8%にとどまります。C北地区再開発（43階・2035年竣工予定）は魅力ですが準備組合段階かつ竣工が保有期間（3〜5年）の外であり、<b>3〜5年売却シナリオでは損益分岐（+7.0%）に届かない可能性が高い</b>と判断します。</li>
+</ul>
+<p><b>市況判断:</b> 5駅とも明確な下落局面にはなく、在庫は神奈川県全体で減少傾向（2025年下半期 11,609→11,333件、-2.4%）。一方で県全体の成約㎡単価は2025年4-6月期に前年同期比-3.9%と頭打ちの兆候もあり、「上昇の鈍化」を織り込むべき局面です（出典は②⑤参照）。年率10%超の「過熱」判定に該当する駅はありませんでした（武蔵小杉の3年+19%＝年率約6%が最大）。</p>
+</div>
+
+<!-- ===================== ② ===================== -->
+<h2 id="sec2">② 駅別スコアマトリクス</h2>
+
+<p>5指標×重み付けによる評価（各10点満点）。スコアは下記の根拠データに基づく本レポートのアナリスト評価であり、機械的算出ではありません。</p>
+
+<div class="tablebox">
+<table>
+  <tr>
+    <th>指標（重み）</th><th>武蔵小杉</th><th>綱島</th><th>新川崎</th><th>東神奈川</th><th>上大岡</th>
+  </tr>
+  <tr>
+    <td>①価格トレンド（25%）<br><span class="src">3年上昇率ベース。年率10%超は過熱減点</span></td>
+    <td class="num">8<br><span class="src">3年+19%</span></td>
+    <td class="num">6<br><span class="src">3年+12%</span></td>
+    <td class="num">6<br><span class="src">前年+2.1% / 10年+58%<br>（3年値は取得不可）</span></td>
+    <td class="num">8<br><span class="src">3年+18%</span></td>
+    <td class="num">3<br><span class="src">3年+8.78% / 10年+1.8%</span></td>
+  </tr>
+  <tr>
+    <td>②人口動態（20%）</td>
+    <td class="num">9<br><span class="src">中原区: 市内最高の増加率</span></td>
+    <td class="num">7<br><span class="src">港北区: 増加継続・都内からの転入超過は縮小</span></td>
+    <td class="num">7<br><span class="src">幸区: 高増加率（数値は取得不可）</span></td>
+    <td class="num">7<br><span class="src">神奈川区: 5年で+5,000人超</span></td>
+    <td class="num">2<br><span class="src">港南区: 2020年ピークに減少</span></td>
+  </tr>
+  <tr>
+    <td>③再開発パイプライン（25%）<br><span class="src">竣工3〜7年後の案件を最高評価</span></td>
+    <td class="num">9<br><span class="src">着工済タワー2案件（2027〜2029竣工）</span></td>
+    <td class="num">8<br><span class="src">東口再開発2028竣工予定（事業中）</span></td>
+    <td class="num">2<br><span class="src">新規案件確認できず</span></td>
+    <td class="num">3<br><span class="src">主要事業は竣工済・臨海部は段階不明確</span></td>
+    <td class="num">6<br><span class="src">C北地区43階（準備組合・2035竣工＝期間外）</span></td>
+  </tr>
+  <tr>
+    <td>④政策的位置づけ（15%）</td>
+    <td class="num">9<br><span class="src">都市機能誘導区域（広域拠点）・ホーム増設済</span></td>
+    <td class="num">7<br><span class="src">答申198号路線が開業済（横浜市の区域指定は素案段階）</span></td>
+    <td class="num">5<br><span class="src">誘導区域（地域生活拠点）・交通改良は要望段階</span></td>
+    <td class="num">4<br><span class="src">区域指定は素案段階・貨物支線は構想止まり</span></td>
+    <td class="num">4<br><span class="src">区域指定は素案段階・環状鉄道は構想止まり</span></td>
+  </tr>
+  <tr>
+    <td>⑤リスク（15%）<br><span class="src">減点方式（高得点=低リスク）</span></td>
+    <td class="num">4<br><span class="src">浸水0.5〜3m（一部3〜5m）・2019年内水氾濫実績</span></td>
+    <td class="num">3<br><span class="src">浸水0.5〜3m・東部3〜5m・滞水最大1週間</span></td>
+    <td class="num">5<br><span class="src">二河川に挟まれる（駅周辺の深さは取得不可）</span></td>
+    <td class="num">6<br><span class="src">低地・海側に浸水想定（駅周辺の深さは取得不可）</span></td>
+    <td class="num">8<br><span class="src">分水路で軽減・一部想定0.0m</span></td>
+  </tr>
+  <tr>
+    <th>加重合計（10点満点）</th>
+    <td class="num"><span class="score-big">8.0</span></td>
+    <td class="num"><span class="score-big">6.4</span></td>
+    <td class="num"><span class="score-big">4.9</span></td>
+    <td class="num"><span class="score-big">5.7</span></td>
+    <td class="num"><span class="score-big">4.5</span></td>
+  </tr>
+  <tr>
+    <th>予算4,500万円との整合</th>
+    <td><span class="badge risk">不可</span><span class="src">ボリューム9,000万〜1.2億</span></td>
+    <td><span class="badge up">可</span><span class="src">ファミリー向け3,197万</span></td>
+    <td><span class="badge flat">超過気味</span><span class="src">70㎡換算5,490万</span></td>
+    <td><span class="badge up">可</span><span class="src">ファミリー向け3,876万</span></td>
+    <td><span class="badge up">余裕</span><span class="src">平均2,462万</span></td>
+  </tr>
+</table>
+</div>
+
+<div class="chartbox">
+  <canvas id="chartTotal"></canvas>
+  <div class="cap">加重合計スコア（10点満点）。武蔵小杉は予算外のため参考値。</div>
+</div>
+
+<div class="chartbox">
+  <canvas id="chartRadar"></canvas>
+  <div class="cap">指標別スコア（10点満点）。</div>
+</div>
+
+<!-- ===================== ③ ===================== -->
+<h2 id="sec3">③ 駅ごとの詳細分析</h2>
+<p class="src">以下の数値の取得日はすべて2026-06-11。民間相場サイトの数値は各社の集計方法・時点が異なる参考値です。</p>
+
+<h3>1. 武蔵小杉（川崎市中原区）— 総合8.0｜判断: 上昇継続（ただし予算外）</h3>
+<div class="card">
+<p><span class="badge up">価格: 上昇</span><span class="badge risk">予算: 不可</span><span class="badge risk">水害: 重い</span></p>
+<ul>
+  <li><b>価格:</b> 売却相場412.4万円/坪（2026年3月、前年比+7.32%）<a class="src" href="https://www.mansion-review.jp/baikyaku/station/1130307/souba.html">[マンションレビュー]</a>。坪単価は3年前比+19%（年率換算約6%）<a class="src" href="https://search.sumnara.jp/trends/stations/%E6%AD%A6%E8%94%B5%E5%B0%8F%E6%9D%89">[スムナラ]</a>。中原区平均は2022→2025年で+13.4% <a class="src" href="https://www.home4u.jp/sell/juku/mansion/sell-552-40659">[HOME4U]</a>。<b>判断根拠:</b> 年率10%は超えておらず「過熱」ではないが、売出ボリュームゾーンが9,000万〜1.2億円へ移行しており予算層には手が届かない水準 <a class="src" href="https://news.livedoor.com/article/detail/30009205/">[市場分析記事]</a>。</li>
+  <li><b>地価:</b> 中原区商業地は2026年公示で前年比+9.43%、住宅地は2025年基準地価で+4.92% <a class="src" href="https://tochidai.info/kanagawa/kawasaki-nakahara/">[土地代データ]</a>。武蔵小杉駅周辺の2025年公示平均は+8.61% <a class="src" href="https://tochidai.info/area/musashi-kosugi/">[同]</a>。地価LOOKの神奈川5地区の一つで全地点上昇と報告 <a class="src" href="https://invalance.co.jp/yokohama-kawasaki-real-estate-investment-land-price/">[INVALANCE解説]</a>（最新回の個別区分は取得不可）。</li>
+  <li><b>人口:</b> 中原区は2017年比+5.68%で川崎市7区中最高、25〜29歳の流入が顕著 <a class="src" href="https://hiyosi.net/2024/04/15/population_growth2024/">[横浜日吉新聞]</a>。川崎市全体の転入超過は2024年6,461人（全国9位）<a class="src" href="https://www.soumu.go.jp/menu_news/s-news/01toukei03_01000138.html">[総務省]</a>。</li>
+  <li><b>再開発:</b> ザ・パークハウス武蔵小杉タワーズ（50階×2棟、2027年9月/2028年5月竣工予定・建設中）<a class="src" href="https://www.mecsumai.com/tph-musashikosugi-towers/redevelopment/">[三菱地所レジデンス]</a>、小杉町一丁目計画（43階・約500戸、2025年着工・2029年10月竣工予定）<a class="src" href="https://musashikosugi.blog.shinobi.jp/Entry/6265/">[武蔵小杉ブログ]</a>。保有期間内〜直後に竣工が重なる厚いパイプライン。</li>
+  <li><b>政策・交通:</b> 川崎市立地適正化計画で小杉駅周辺は都市機能誘導区域（広域拠点）<a class="src" href="https://www.city.kawasaki.jp/500/page/0000174493.html">[川崎市]</a>。横須賀線新下りホーム2022年供用（混雑約3割緩和）<a class="src" href="https://www.jreast.co.jp/press/2022/yokohama/20220916_y1.pdf">[JR東日本PDF]</a>。相鉄・JR直通線の停車駅（2019年開業）。</li>
+  <li><b>リスク:</b> 多摩川水系の想定最大規模で駅周辺0.5〜3m（一部3〜5m）<a class="src" href="https://www.city.kawasaki.jp/530/page/0000018174.html">[川崎市ハザードマップ]</a>。2019年台風19号では排水樋管からの逆流による内水氾濫が実際に発生（浸水量の70%以上が多摩川からの逆流水）<a class="src" href="https://www.komazawa-u.ac.jp/~fumio/disaster/2019oct-ty1919/ty1919-4.html">[駒澤大学資料]</a>。</li>
+</ul>
+</div>
+
+<h3>2. 綱島（横浜市港北区）— 総合6.4｜判断: 緩やかな上昇（予算内・有力／水害リスク要精査）</h3>
+<div class="card">
+<p><span class="badge up">価格: 緩やかな上昇</span><span class="badge up">予算: 可</span><span class="badge risk">水害: 最重</span></p>
+<ul>
+  <li><b>価格:</b> ファミリー向け（3K〜3LDK）3,197万円、坪単価3年前比+12%（年率約3.9%）<a class="src" href="https://search.sumnara.jp/trends/stations/%E7%B6%B1%E5%B3%B6">[スムナラ]</a>。港北区の中古マンションは直近3年+2.85% <a class="src" href="https://lifullhomes-index.jp/info/areas/kanagawa-pref/05061-st/sale/mansion/chuko/">[住まいインデックス]</a>。<b>判断根拠:</b> 新線開業の追い風はあるが区平均の伸びは穏やかで、「緩やかな上昇」。駅直結ドレッセタワー新綱島は平均坪単価約400万円で販売好調（要望書4,500件超）<a class="src" href="https://www.jutaku-s.com/newsp/id/0000049725">[住宅新報]</a>。</li>
+  <li><b>地価:</b> 港北区住宅地は2025年公示+4.00% <a class="src" href="https://tochidai.info/kanagawa/yokohama-kohoku/">[土地代データ]</a>（商業地は取得不可）。</li>
+  <li><b>人口:</b> 港北区365,316人（2024年10月）で増加継続、2025年国勢調査速報でも5年前比5,000人超の増 <a class="src" href="https://shin-yoko.net/2026/05/13/population_growth2026-2/">[新横浜新聞]</a>。ただし都内からの転入超過は2021年1,074人→2023年200人へ縮小 <a class="src" href="https://hiyosi.net/2024/10/09/population_growth2024-5/">[横浜日吉新聞]</a>。綱島東1丁目は再開発竣工後に年400人超の増加 <a class="src" href="https://hiyosi.net/2024/05/31/population_growth2024-3/">[同]</a>。</li>
+  <li><b>再開発:</b> 新綱島駅前再開発は2023年竣工済（効果は顕在化済）<a class="src" href="https://www.city.yokohama.lg.jp/kurashi/machizukuri-kankyo/toshiseibi/jokyo/kukakuseiri/tsunashima/tunasaikaihatu.html">[横浜市]</a>。<b>綱島駅東口地区再開発（27階・約350戸・駅前広場）が事業中で2028年竣工予定</b> <a class="src" href="https://www.city.yokohama.lg.jp/kurashi/machizukuri-kankyo/toshiseibi/jokyo/kukakuseiri/tsunashima/tunahigasiguchi.html">[横浜市]</a> — 3〜5年保有の出口（2029〜2031年売却）と竣工タイミングが噛み合う点が魅力。</li>
+  <li><b>政策・交通:</b> 東急新横浜線（答申198号の神奈川東部方面線）2023年開業で新綱島駅が新設済 <a class="src" href="https://www.tokyu.co.jp/company/news/list/Pid=20221216-2.html">[東急]</a>。グリーンライン延伸（日吉〜鶴見）は事業性に課題ありで未定 <a class="src" href="https://www.city.yokohama.lg.jp/kurashi/machizukuri-kankyo/kotsu/tetsudo/tetsudo-plan/yokohamakanjotetsudo.html">[横浜市]</a>。横浜市の立地適正化計画は素案段階（2027年3月策定目標）で区域判定は確定情報なし <a class="src" href="https://digital.kentsu.co.jp/articles/artcl_rglr/01KM1GSGJ9K6HHDQDYBN1Y9TNP">[建通新聞]</a>。</li>
+  <li><b>リスク:</b> 鶴見川水系の想定最大規模で駅周辺0.5〜3m、綱島東4・5丁目等は3〜5m。氾濫後最大1週間水が引かない区域の公表もあり、<b>5駅で最も重い水害想定</b> <a class="src" href="https://www.ktr.mlit.go.jp/keihin/keihin00688.html">[京浜河川事務所]</a> <a class="src" href="https://hiyosi.net/2024/02/19/bousai2024/">[横浜日吉新聞]</a>。物件選定時はマンション単位の浸水深・電気設備階の確認が必須。</li>
+</ul>
+</div>
+
+<h3>3. 新川崎（川崎市幸区）— 総合4.9｜判断: 上昇鈍化・材料薄（中立〜見送り）</h3>
+<div class="card">
+<p><span class="badge flat">価格: 上昇鈍化</span><span class="badge flat">予算: 超過気味</span></p>
+<ul>
+  <li><b>価格:</b> 売却相場259.3万円/坪・70㎡換算5,490万円（2025年11月、前年比+2.1%）<a class="src" href="https://www.mansion-review.jp/baikyaku/station/1130805/souba.html">[マンションレビュー]</a>。10年前比は+46〜58% <a class="src" href="https://diamond-fudosan.jp/ud/realestate_price_mansion_2024/url/%E6%96%B0%E5%B7%9D%E5%B4%8E%E9%A7%85%EF%BC%88%E7%A5%9E%E5%A5%88%E5%B7%9D%E7%9C%8C%EF%BC%89">[ダイヤモンド不動産研究所]</a>。<b>判断根拠:</b> 長期では上昇してきたが直近の前年比は+2.1%に鈍化。3年上昇率の直接データは取得不可。</li>
+  <li><b>地価:</b> 幸区は2025年公示で住宅地+5.93%・商業地+8.89%（川崎駅周辺が牽引）<a class="src" href="https://tochidai.info/kanagawa/kawasaki-saiwai/">[土地代データ]</a>。</li>
+  <li><b>人口:</b> 幸区は中原区とともに市内で高い人口増加率と報道 <a class="src" href="https://hiyosi.net/2024/04/15/population_growth2024/">[横浜日吉新聞]</a>（区単独の転入超過数は取得不可）。</li>
+  <li><b>再開発:</b> 新川崎地区整備事業（操車場跡地）は概ね完了済みのストック <a class="src" href="https://www.city.kawasaki.jp/500/page/0000018051.html">[川崎市]</a>。<b>進行中の新規再開発・準備組合は確認できず</b> — 保有期間中の新たな価格材料に乏しい。</li>
+  <li><b>政策・交通:</b> 立地適正化計画で新川崎・鹿島田駅周辺は都市機能誘導区域（地域生活拠点）<a class="src" href="https://www.city.kawasaki.jp/500/page/0000174493.html">[川崎市]</a>。相鉄・JR直通線は新川崎駅に<b>停車しない</b>（線路構造上不可）<a class="src" href="https://hiyosi.net/2019/10/03/musasi_kosugi_station-13/">[横浜日吉新聞]</a>。湘南新宿ライン停車・改札新設は市の要望段階 <a class="src" href="https://www.reds.co.jp/p120422/">[REDS]</a>。</li>
+  <li><b>リスク:</b> 多摩川・鶴見川に挟まれた立地で両水系のハザードマップ対象 <a class="src" href="https://www.city.kawasaki.jp/530/page/0000018174.html">[川崎市]</a>。駅周辺の具体的な想定浸水深は<span class="na">取得不可</span>（市公表PDFの個別確認が必要）。</li>
+</ul>
+</div>
+
+<h3>4. 東神奈川（横浜市神奈川区）— 総合5.7｜判断: 上昇（予算内・有力／新規材料は薄い）</h3>
+<div class="card">
+<p><span class="badge up">価格: 上昇</span><span class="badge up">予算: 可</span></p>
+<ul>
+  <li><b>価格:</b> ファミリー向け（3K〜3LDK）3,876万円、坪単価3年前比+18%（年率約5.7%）<a class="src" href="https://search.sumnara.jp/trends/stations/%E6%9D%B1%E7%A5%9E%E5%A5%88%E5%B7%9D">[スムナラ]</a>。町域の推定相場96.4万〜103.6万円/㎡・9年で+71.5% <a class="src" href="https://t23m-navi.jp/list/%E7%A5%9E%E5%A5%88%E5%B7%9D%E7%9C%8C%E6%A8%AA%E6%B5%9C%E5%B8%82%E7%A5%9E%E5%A5%88%E5%B7%9D%E5%8C%BA%E6%9D%B1%E7%A5%9E%E5%A5%88%E5%B7%9D">[マンションナビ]</a>。売却相場前年比+8.02%（2025年7月）<a class="src" href="https://mansionvalue.jp/market/14/line/2196/2196330">[マンションバリュー]</a>。<b>判断根拠:</b> 横浜駅隣接の立地優位で長短期とも明確な上昇。年率10%未満で過熱には非該当。</li>
+  <li><b>地価:</b> 神奈川区は2025年公示で全用途+6.79%（住宅地+5.12%・商業地+9.61%）と5区で最高水準 <a class="src" href="https://tochidai.info/kanagawa/yokohama-kanagawa/">[土地代データ]</a>。</li>
+  <li><b>人口:</b> 2025年国勢調査速報で5年前比5,000人超の増加（市全体は減少の中で）<a class="src" href="https://shin-yoko.net/2026/05/13/population_growth2026-2/">[新横浜新聞]</a>。市の将来推計でも2070年に2020年人口を上回る5区の一つ <a class="src" href="https://www.city.yokohama.lg.jp/city-info/seisaku/torikumi/shien/jinkosuikei.html">[横浜市]</a>。</li>
+  <li><b>再開発:</b> 東口「かなっくシティ」関連4事業は完了済み（直近は2019年竣工）<a class="src" href="https://www.city.yokohama.lg.jp/kurashi/machizukuri-kankyo/toshiseibi/toshin/keihin/e-kana.html">[横浜市]</a>。進行中は東神奈川臨海部（東高島駅北地区等）の再編 <a class="src" href="https://www.city.yokohama.lg.jp/kurashi/machizukuri-kankyo/toshiseibi/toshin/keihin/20151015154020.html">[横浜市]</a> だが事業段階・竣工年が明確な駅前案件は確認できず。<b>パイプラインの薄さがスコアの主な減点要因</b>。</li>
+  <li><b>政策・交通:</b> 東海道貨物支線の貨客併用化（答申198号）は「事業性に課題」で構想止まり <a class="src" href="https://www.pref.kanagawa.jp/docs/gd6/cnt/f534785/index.html">[神奈川県]</a>。立地適正化計画は素案段階で区域判定の確定情報なし。</li>
+  <li><b>リスク:</b> 入江川沿い低地と海側（子安通等）に洪水・高潮の浸水想定 <a class="src" href="https://www.city.yokohama.lg.jp/bousai-kyukyu-bohan/bousai-saigai/map/shinsui/kanagawa.html">[横浜市]</a>。駅周辺の具体深は<span class="na">取得不可</span>。台地側を選べば回避余地が大きい。</li>
+</ul>
+</div>
+
+<h3>5. 上大岡（横浜市港南区）— 総合4.5｜判断: 横ばい（3〜5年では損益分岐到達が困難）</h3>
+<div class="card">
+<p><span class="badge flat">価格: 横ばい寄り</span><span class="badge up">予算: 余裕</span><span class="badge up">水害: 軽い</span></p>
+<ul>
+  <li><b>価格:</b> 平均2,462万円（125万円/坪）<a class="src" href="https://diamond-fudosan.jp/ud/realestate_price_mansion_2024/url/%E4%B8%8A%E5%A4%A7%E5%B2%A1%E9%A7%85%EF%BC%88%E7%A5%9E%E5%A5%88%E5%B7%9D%E7%9C%8C%EF%BC%89">[ダイヤモンド不動産研究所]</a>。2025年相場54.1万円/㎡（前年比+1.1%）<a class="src" href="https://utinokati.com/details/mansion/stations/14-CZZZ-L0227-S02964/">[ウチノカチ]</a>。築10年・70㎡標準物件は直近3年+8.78%だが、<b>過去10年では+1.8%と周辺平均（+19.6%）を大きく下回る</b>。同サイトのAI予測は10年後▲22.2%（参考値）。<b>判断根拠:</b> 長期トレンドの弱さと人口減少を重視し「横ばい」。</li>
+  <li><b>地価:</b> 港南区は2025年公示で全用途+3.10%・宅地+2.85%と5区で最低 <a class="src" href="https://tochidai.info/kanagawa/yokohama-konan/">[土地代データ]</a>。</li>
+  <li><b>人口:</b> 港南区は2020年の22万人をピークに減少へ転換、直近10年で約2%減 <a class="src" href="https://www.jutakujohokan.co.jp/article/2023/12/02/yokohama-konan-city/">[住まいの情報館]</a>。市推計では50年後に9.1万人減（約4割減）<a class="src" href="https://www.townnews.co.jp/0112/2024/04/18/729061.html">[タウンニュース]</a>。</li>
+  <li><b>再開発:</b> <b>上大岡C北地区再開発（43階・高さ約170m・約595戸・ブルーライン地下直結）が準備組合段階。2030年着工・2035年竣工予定</b> <a class="src" href="https://www.decn.co.jp/?p=179836">[日刊建設工業新聞]</a>。大型だが竣工は3〜5年保有の出口より後で、準備組合段階は計画変更・遅延リスクも残る。長期保有（10年級）なら評価が変わる材料。</li>
+  <li><b>政策・交通:</b> 横浜環状鉄道（上大岡経由）は答申198号で「事業性に課題」とされ構想止まり <a class="src" href="https://www.city.yokohama.lg.jp/kurashi/machizukuri-kankyo/kotsu/tetsudo/tetsudo-plan/yokohamakanjotetsudo.html">[横浜市]</a>。立地適正化計画は素案段階。</li>
+  <li><b>リスク:</b> 大岡川分水路により洪水リスクは軽減され、駅周辺の一部は想定浸水深0.0mの民間データもあり <a class="src" href="https://hudousan-kounyu.com/hazardmap/yokohama/konanku">[イエゼミ]</a> <a class="src" href="https://www.ieshil.com/buildings/267621/surroundings/flood/">[IESHIL]</a>。物理リスクは5駅で最小。</li>
+</ul>
+</div>
+
+<div class="chartbox">
+  <canvas id="chartPrice"></canvas>
+  <div class="cap">直近3年の中古マンション価格上昇率（公表値、駅単位・出典は本文）と損益分岐ライン+7.0%。新川崎は3年値が取得不可のため非表示。<b>過去実績であり将来の予測ではありません。</b></div>
+</div>
+
+<!-- ===================== ④ ===================== -->
+<h2 id="sec4">④ 損益分岐シミュレーション（3〜5年売却）</h2>
+
+<div class="card">
+<h4>前提（テンプレート指定の簡略モデル）</h4>
+<ul>
+  <li>購入価格 P = 4,500万円、往復取引コスト = P×7% = <b>315万円</b>（購入時+売却時の仲介手数料・諸費用の概算合計）</li>
+  <li>課税譲渡所得 = 売却価格 − 4,500万円 − 315万円（プラスの場合のみ課税）</li>
+  <li>税率: <b>短期譲渡（譲渡年1月1日時点の所有期間5年以下）39.63%</b> / <b>長期譲渡（同5年超）20.315%</b></li>
+  <li><b>含めていないもの:</b> 建物減価償却による取得費の目減り（課税所得を増やす方向）、ローン金利、管理費・修繕積立金・固定資産税等の保有コスト、居住用の3,000万円特別控除（自宅として居住する場合は大半が非課税になり得る）。投資判断時は個別に上乗せしてください。</li>
+</ul>
+
+<h4>結果</h4>
+<ul>
+  <li><b>損益分岐点: 売却価格4,815万円 = 値上がり率+7.0%</b>（この水準までは譲渡益が出ないため税率の場合分けは損益分岐自体に影響しない）</li>
+  <li>年率換算の必要上昇率: <b>3年保有なら年+2.28%、4年なら年+1.71%、5年なら年+1.36%</b></li>
+  <li><b>重要:</b> 所有期間は「譲渡した年の1月1日時点」で判定されるため、<b>2026年中の購入なら2032年1月以降の売却でないと長期税率（20.315%）になりません。「3〜5年保有での売却」はほぼ確実に短期税率（39.63%）です。</b>5年弱保有して売るくらいなら、6年目の年明けまで待つ価値が大きい点に注意。</li>
+</ul>
+
+<div class="tablebox">
+<table>
+  <tr><th>値上がり率</th><th>売却価格</th><th>課税譲渡所得</th><th>税引後手取り損益（短期39.63%）</th><th>税引後手取り損益（長期20.315%）</th></tr>
+  <tr><td class="num">±0%</td><td class="num">4,500万円</td><td class="num">−315万円（益なし）</td><td class="num" style="color:var(--bad)">−315万円</td><td class="num" style="color:var(--bad)">−315万円</td></tr>
+  <tr><td class="num">+5%</td><td class="num">4,725万円</td><td class="num">−90万円（益なし）</td><td class="num" style="color:var(--bad)">−90万円</td><td class="num" style="color:var(--bad)">−90万円</td></tr>
+  <tr><td class="num"><b>+7.0%</b></td><td class="num"><b>4,815万円</b></td><td class="num">0円</td><td class="num"><b>±0（損益分岐）</b></td><td class="num"><b>±0（損益分岐）</b></td></tr>
+  <tr><td class="num">+10%</td><td class="num">4,950万円</td><td class="num">135万円</td><td class="num" style="color:var(--good)">+81万円</td><td class="num" style="color:var(--good)">+108万円</td></tr>
+  <tr><td class="num">+15%</td><td class="num">5,175万円</td><td class="num">360万円</td><td class="num" style="color:var(--good)">+217万円</td><td class="num" style="color:var(--good)">+287万円</td></tr>
+  <tr><td class="num">+20%</td><td class="num">5,400万円</td><td class="num">585万円</td><td class="num" style="color:var(--good)">+353万円</td><td class="num" style="color:var(--good)">+466万円</td></tr>
+  <tr><td class="num">+25%</td><td class="num">5,625万円</td><td class="num">810万円</td><td class="num" style="color:var(--good)">+489万円</td><td class="num" style="color:var(--good)">+645万円</td></tr>
+</table>
+</div>
+<p class="src">手取り300万円を確保するには短期で約+18.0%、長期で約+15.4%の値上がりが必要。</p>
+</div>
+
+<div class="chartbox">
+  <canvas id="chartBreakeven"></canvas>
+  <div class="cap">値上がり率と税引後手取り損益（万円）。実線=短期譲渡（39.63%）、破線=長期譲渡（20.315%）。</div>
+</div>
+
+<div class="card">
+<h4>駅別の到達可能性（直近3年の実績ペースが続いた場合の機械的な当てはめ。<u>予測ではありません</u>）</h4>
+<div class="tablebox">
+<table>
+  <tr><th>駅</th><th>直近3年上昇率（実績）</th><th>3年保有で+7.0%に届くか</th><th>コメント</th></tr>
+  <tr><td>武蔵小杉</td><td class="num">+19%</td><td>届く見込み大</td><td>ただし予算4,500万円の物件が存在しない</td></tr>
+  <tr><td>東神奈川</td><td class="num">+18%</td><td>届く見込み大</td><td>予算内・地価+6.79%と裏付けも強い</td></tr>
+  <tr><td>綱島</td><td class="num">+12%</td><td>届く可能性あり</td><td>2028年の東口再開発竣工が出口と重なる。水害デューデリ必須</td></tr>
+  <tr><td>新川崎</td><td class="num"><span class="na">3年値取得不可</span>（前年+2.1%）</td><td>不確実</td><td>直近ペース（年2%強）の単純継続では3年+6%強で際どい</td></tr>
+  <tr><td>上大岡</td><td class="num">+8.78%（10年では+1.8%）</td><td>困難の可能性が高い</td><td>長期トレンドが弱く、再開発効果の発現（2035年）は保有期間外</td></tr>
+</table>
+</div>
+<p class="src">※県全体の成約㎡単価が2025年4-6月期に前年比-3.9%と頭打ちの兆候がある点（<a href="https://www.jutakujohokan.co.jp/article/2026/02/14/market-conditions-2025-2/">住まいの情報館</a>経由REINSデータ）を踏まえ、過去3年実績の単純外挿は楽観側に偏るリスクがあります。</p>
+</div>
+
+<!-- ===================== ⑤ ===================== -->
+<h2 id="sec5">⑤ データソース一覧</h2>
+<div class="card">
+<p class="src">すべて取得日2026-06-11、WebSearch経由で確認。●=公的機関、○=民間。</p>
+<h4>価格・地価</h4>
+<ul class="cite">
+  <li>○ マンションレビュー 駅別売却相場（武蔵小杉 / 新川崎） — <a href="https://www.mansion-review.jp/baikyaku/station/1130307/souba.html">mansion-review.jp（武蔵小杉）</a> / <a href="https://www.mansion-review.jp/baikyaku/station/1130805/souba.html">同（新川崎）</a></li>
+  <li>○ スムナラ 駅別相場トレンド（武蔵小杉 / 綱島 / 東神奈川） — <a href="https://search.sumnara.jp/trends/stations/%E6%AD%A6%E8%94%B5%E5%B0%8F%E6%9D%89">search.sumnara.jp</a></li>
+  <li>○ HOME4U 中原区マンション売却相場（2026年版） — <a href="https://www.home4u.jp/sell/juku/mansion/sell-552-40659">home4u.jp</a></li>
+  <li>○ ダイヤモンド不動産研究所（新川崎 / 上大岡） — <a href="https://diamond-fudosan.jp/ud/realestate_price_mansion_2024/url/%E6%96%B0%E5%B7%9D%E5%B4%8E%E9%A7%85%EF%BC%88%E7%A5%9E%E5%A5%88%E5%B7%9D%E7%9C%8C%EF%BC%89">diamond-fudosan.jp</a></li>
+  <li>○ マンションナビ（東神奈川町域 / 上大岡実例） — <a href="https://t23m-navi.jp/">t23m-navi.jp</a>、ウチノカチ — <a href="https://utinokati.com/">utinokati.com</a>、住まいインデックス — <a href="https://lifullhomes-index.jp/">lifullhomes-index.jp</a>、マンションバリュー — <a href="https://mansionvalue.jp/">mansionvalue.jp</a></li>
+  <li>○ 土地代データ（区別地価公示・基準地価） — <a href="https://tochidai.info/">tochidai.info</a>（中原 / 港北 / 幸 / 神奈川 / 港南 / 武蔵小杉駅周辺）</li>
+  <li>● 国交省 地価LOOKレポート（令和7年第4四半期・2026年2月公表） — <a href="https://www.mlit.go.jp/totikensangyo/totikensangyo_fr4_000045.html">mlit.go.jp</a></li>
+  <li>○ 住まいの情報館 市況レポート（神奈川県成約・在庫 2025年上/下半期） — <a href="https://www.jutakujohokan.co.jp/article/2026/02/14/market-conditions-2025-2/">jutakujohokan.co.jp</a>（REINS Market Watch経由）</li>
+  <li>○ 武蔵小杉・新丸子市場分析（売出価格帯分布） — <a href="https://news.livedoor.com/article/detail/30009205/">news.livedoor.com</a></li>
+</ul>
+<h4>再開発・交通・政策</h4>
+<ul class="cite">
+  <li>● 横浜市（新綱島駅前 / 綱島東口 / 東神奈川駅周辺 / 上大岡駅周辺 / 横浜環状鉄道 / 将来人口推計） — <a href="https://www.city.yokohama.lg.jp/">city.yokohama.lg.jp</a></li>
+  <li>● 川崎市（立地適正化計画 / 新川崎地区整備事業 / 横須賀線混雑緩和 / 洪水ハザードマップ） — <a href="https://www.city.kawasaki.jp/">city.kawasaki.jp</a></li>
+  <li>● JR東日本横浜支社プレス（武蔵小杉新ホーム） — <a href="https://www.jreast.co.jp/press/2022/yokohama/20220916_y1.pdf">jreast.co.jp（PDF）</a>、東急電鉄（新横浜線開業） — <a href="https://www.tokyu.co.jp/company/news/list/Pid=20221216-2.html">tokyu.co.jp</a>、JRTT — <a href="https://www.jrtt.go.jp/project/working-report/kanagawa-east/no80/">jrtt.go.jp</a></li>
+  <li>● 神奈川県（東海道貨物支線貨客併用化検討協議会） — <a href="https://www.pref.kanagawa.jp/docs/gd6/cnt/f534785/index.html">pref.kanagawa.jp</a></li>
+  <li>○ 三菱地所レジデンス（パークハウス武蔵小杉タワーズ） — <a href="https://www.mecsumai.com/tph-musashikosugi-towers/redevelopment/">mecsumai.com</a>、日刊建設工業新聞（上大岡C北） — <a href="https://www.decn.co.jp/?p=179836">decn.co.jp</a>、住宅新報（ドレッセタワー新綱島） — <a href="https://www.jutaku-s.com/newsp/id/0000049725">jutaku-s.com</a></li>
+  <li>○ 建通新聞（横浜市立地適正化計画 素案） — <a href="https://digital.kentsu.co.jp/articles/artcl_rglr/01KM1GSGJ9K6HHDQDYBN1Y9TNP">digital.kentsu.co.jp</a>、武蔵小杉ブログ / 武蔵小杉ライフ / 横浜日吉新聞 / 新横浜新聞 / skyskysky.net / REDS ほか（本文中に個別リンク）</li>
+</ul>
+<h4>人口・防災</h4>
+<ul class="cite">
+  <li>● 総務省統計局 住民基本台帳人口移動報告 2025年結果 — <a href="https://www.stat.go.jp/data/idou/2025np/jissu/pdf/2025gaiyou.pdf">stat.go.jp（PDF）</a> / 報道資料 — <a href="https://www.soumu.go.jp/menu_news/s-news/01toukei03_01000138.html">soumu.go.jp</a></li>
+  <li>● 国交省京浜河川事務所（鶴見川浸水想定区域図） — <a href="https://www.ktr.mlit.go.jp/keihin/keihin00688.html">ktr.mlit.go.jp</a>、横浜市・川崎市 各区ハザードマップ（本文中に個別リンク）</li>
+  <li>○ 横浜日吉新聞（港北区・中原区人口、綱島防災） — <a href="https://hiyosi.net/">hiyosi.net</a>、新横浜新聞 — <a href="https://shin-yoko.net/">shin-yoko.net</a>、タウンニュース — <a href="https://www.townnews.co.jp/">townnews.co.jp</a>、日経 — <a href="https://www.nikkei.com/">nikkei.com</a></li>
+  <li>○ 駒澤大学 令和元年台風19号資料（武蔵小杉内水氾濫の検証） — <a href="https://www.komazawa-u.ac.jp/~fumio/disaster/2019oct-ty1919/ty1919-4.html">komazawa-u.ac.jp</a></li>
+</ul>
+</div>
+
+<!-- ===================== ⑥ ===================== -->
+<h2 id="sec6">⑥ 取得不可データと人間タスク（TODO）</h2>
+
+<div class="card">
+<h4>取得不可だったデータ（推測で埋めていません）</h4>
+<ul>
+  <li><span class="na">不動産情報ライブラリAPI</span>: 過去5年・四半期単位の成約㎡単価時系列、駅別CAGRの厳密値、地価公示・地価調査ポイント変動率（ネットワーク遮断＋APIキー未設定）</li>
+  <li><span class="na">e-Stat API</span>: 区別転入超過数の時系列、年齢階級別（25〜39歳）転入動向（同上）。中原区・幸区・神奈川区の区単独の直近転入超過数値は報道からも確認できず</li>
+  <li><span class="na">国土数値情報</span>: 用途地域・居住誘導区域/都市機能誘導区域・洪水浸水想定区域のGISデータ（駅半径800m圏の機械判定は未実施。本文の判定は自治体公表の文字情報ベース）</li>
+  <li><span class="na">駅単位の売出在庫推移</span>（県全体の在庫統計で代替）、<span class="na">新川崎・東神奈川駅周辺のピンポイント想定浸水深</span>、<span class="na">地価LOOK武蔵小杉地区の最新回の上昇率区分</span>、<span class="na">新川崎の3年上昇率</span>、<span class="na">港北区商業地・港南区商業地の公示変動率</span></li>
+  <li>横浜市の立地適正化計画は<b>素案段階</b>（2027年3月策定目標）のため、綱島・東神奈川・上大岡の誘導区域判定は現時点で確定不可</li>
+</ul>
+
+<h4>人間タスク（チェックリスト）</h4>
+<ul>
+  <li>☐ <b>不動産情報ライブラリのAPIキー申請</b>（無料・数日かかる）: <a class="src" href="https://www.reinfolib.mlit.go.jp/">reinfolib.mlit.go.jp</a></li>
+  <li>☐ <b>e-Stat APIの利用登録</b>（無料・即日）: <a class="src" href="https://www.e-stat.go.jp/api/">e-stat.go.jp/api</a></li>
+  <li>☐ <b>実行環境のネットワークポリシーで以下のドメインを許可</b>: <code>www.reinfolib.mlit.go.jp</code> / <code>api.e-stat.go.jp</code> / <code>nlftp.mlit.go.jp</code>（現在は全外部APIが403で遮断）→ 許可後にAPIキーを渡して再実行すれば、フェーズ1を含む完全版レポートを生成できます</li>
+  <li>☐ 候補物件確定後: <b>登記簿（全部事項証明書）の取得</b>（法務局・要認証/有料）、マンション単位のハザードマップ確認（想定浸水深・電気設備の設置階・浸水継続時間）、管理組合の修繕積立金・長期修繕計画の確認</li>
+  <li>☐ 横浜市立地適正化計画のパブリックコメント（2026年5月以降）・成案（2027年3月予定）で綱島・東神奈川・上大岡の区域指定を確認</li>
+  <li>☐ 規約上フェッチを控えたサイトの手動確認: REINS Market Watch原典PDF（<a class="src" href="http://www.reins.or.jp/pdf/trend/sf/sf_202507-09.pdf">reins.or.jp</a>）、地価LOOK個票（<a class="src" href="https://www.mlit.go.jp/totikensangyo/totikensangyo_tk4_000050.html">mlit.go.jp 公表資料一覧</a>）、川崎市幸区洪水ハザードマップPDF（新川崎駅周辺の浸水深）</li>
+</ul>
+</div>
+
+<footer>
+  本レポートは公開情報の整理であり、投資勧誘・助言ではありません。民間相場サイトの数値は各社の独自集計であり、不動産情報ライブラリ（成約価格）とは水準が異なる場合があります。最終判断の前に必ず一次データ（成約事例・登記・ハザードマップ原典）をご確認ください。<br>
+  作成: 2026-06-11 ｜ グラフ描画: Chart.js v4（CDN読込のため表示にはインターネット接続が必要）
+</footer>
+
+</div>
+
+<script>
+const STATIONS = ['武蔵小杉','綱島','新川崎','東神奈川','上大岡'];
+const COLORS = ['#2563eb','#0d9488','#9333ea','#ea580c','#64748b'];
+const SCORES = {
+  '①価格トレンド': [8,6,6,8,3],
+  '②人口動態':     [9,7,7,7,2],
+  '③再開発':       [9,8,2,3,6],
+  '④政策':         [9,7,5,4,4],
+  '⑤リスク(高=低リスク)': [4,3,5,6,8],
+};
+const TOTAL = [8.0,6.4,4.9,5.7,4.5];
+
+new Chart(document.getElementById('chartTotal'), {
+  type:'bar',
+  data:{ labels:STATIONS, datasets:[{ label:'加重合計スコア', data:TOTAL,
+    backgroundColor:COLORS.map(c=>c+'cc'), borderColor:COLORS, borderWidth:1 }]},
+  options:{ indexAxis:'y', scales:{ x:{ min:0, max:10, title:{display:true,text:'点（10点満点）'} } },
+    plugins:{ legend:{display:false}, title:{display:true,text:'総合スコア（加重合計）'} } }
+});
+
+new Chart(document.getElementById('chartRadar'), {
+  type:'radar',
+  data:{ labels:Object.keys(SCORES),
+    datasets: STATIONS.map((s,i)=>({ label:s,
+      data:Object.values(SCORES).map(v=>v[i]),
+      borderColor:COLORS[i], backgroundColor:COLORS[i]+'22', pointRadius:2 })) },
+  options:{ scales:{ r:{ min:0, max:10, ticks:{stepSize:2} } },
+    plugins:{ title:{display:true,text:'指標別スコア比較'} } }
+});
+
+new Chart(document.getElementById('chartPrice'), {
+  data:{ labels:STATIONS,
+    datasets:[
+      { type:'bar', label:'直近3年の価格上昇率（%）', data:[19,12,null,18,8.78],
+        backgroundColor:COLORS.map(c=>c+'cc') },
+      { type:'line', label:'損益分岐に必要な上昇率 +7.0%', data:[7,7,7,7,7],
+        borderColor:'#b91c1c', borderDash:[6,4], pointRadius:0 }
+    ]},
+  options:{ scales:{ y:{ title:{display:true,text:'%'}, min:0 } },
+    plugins:{ title:{display:true,text:'3年実績上昇率 vs 損益分岐ライン（新川崎は取得不可）'} } }
+});
+
+// 損益分岐: P=4500万, コスト315万, 課税所得 = 4500*r - 315（>0のみ課税）
+const rs = []; for(let r=-5; r<=25; r+=0.5) rs.push(r);
+function net(r, tax){ const g = 4500*r/100 - 315; return g <= 0 ? g : g*(1-tax); }
+new Chart(document.getElementById('chartBreakeven'), {
+  type:'line',
+  data:{ labels:rs.map(r=>r+'%'),
+    datasets:[
+      { label:'短期譲渡（39.63%）', data:rs.map(r=>net(r,0.3963)), borderColor:'#b91c1c', pointRadius:0 },
+      { label:'長期譲渡（20.315%）', data:rs.map(r=>net(r,0.20315)), borderColor:'#047857', borderDash:[6,4], pointRadius:0 },
+      { label:'損益ゼロ', data:rs.map(()=>0), borderColor:'#94a3b8', borderWidth:1, pointRadius:0 }
+    ]},
+  options:{ scales:{ y:{ title:{display:true,text:'税引後手取り損益（万円）'} },
+      x:{ title:{display:true,text:'値上がり率'}, ticks:{ maxTicksLimit:13 } } },
+    plugins:{ title:{display:true,text:'値上がり率と税引後手取り損益（購入4,500万円・往復コスト7%）'} } }
+});
+</script>
+</body>
+</html>
