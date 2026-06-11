@@ -31,6 +31,10 @@ RHC とは独立した、単一HTMLで動く実験的なミニアプリをまと
 ## apps/transit.html — 乗換・経路検索
 電車のルート検索アプリ（単一HTML・スマホ向け）。
 
+## apps/real-estate/ — 不動産さがしアプリ（開発中）
+物件検索アプリ。複数ファイル構成にできるよう独立ディレクトリで開発。
+- エントリポイントは `apps/real-estate/index.html`
+
 ## apps/gourmet.html — グルメさがしアプリ
 食べログ風のグルメ検索アプリ（単一HTML・スマホ向け）。
 - 店舗データ: OpenStreetMap Overpass API（実在の飲食店）
