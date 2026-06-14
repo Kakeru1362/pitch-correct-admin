@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>綱島・購入判断レポート ＋ 金利/インフレと不動産価格の見通し（東京・神奈川）</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#1f2733; --sub:#5b6877; --line:#dde4ec; --bg:#f6f8fb; --card:#ffffff;
+    --accent:#2563eb; --warn:#b45309; --bad:#b91c1c; --good:#047857; --chip:#eef2f8;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);line-height:1.75;
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 80px}
+  header.rep{border-bottom:3px solid var(--accent);padding-bottom:16px;margin-bottom:28px}
+  h1{font-size:25px;margin:0 0 6px;line-height:1.4}
+  .meta{color:var(--sub);font-size:13px}
+  h2{font-size:20px;margin:48px 0 14px;padding:8px 12px;background:var(--accent);color:#fff;border-radius:6px}
+  h3{font-size:17px;margin:28px 0 10px;border-left:4px solid var(--accent);padding-left:10px}
+  h4{font-size:14.5px;margin:18px 0 6px}
+  p{margin:8px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin:14px 0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;background:#fff}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{background:#eef2f8;font-weight:700}
+  td.num{text-align:right;white-space:nowrap}
+  .tablebox{overflow-x:auto;margin:12px 0}
+  .src{font-size:11.5px;color:var(--sub)}
+  .src a, .cite a{color:var(--accent);text-decoration:none;word-break:break-all}
+  .na{color:var(--bad);font-weight:700}
+  .up{color:var(--good);font-weight:700}
+  .down{color:var(--bad);font-weight:700}
+  .badge{display:inline-block;background:var(--chip);border:1px solid var(--line);border-radius:999px;
+    padding:1px 10px;font-size:12px;margin:2px 4px 2px 0;color:var(--sub)}
+  .badge.g{color:var(--good);border-color:var(--good)}
+  .badge.r{color:var(--bad);border-color:var(--bad)}
+  .badge.w{color:var(--warn);border-color:var(--warn)}
+  .alert{background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:14px 18px;margin:14px 0;font-size:13.5px}
+  .note{background:#eef6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 18px;margin:14px 0;font-size:13.5px}
+  .verdict{background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:16px 20px;margin:16px 0}
+  .verdict.warn{background:#fffbeb;border-color:#fcd34d}
+  .chartbox{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;margin:16px 0}
+  .chartbox .cap{font-size:12px;color:var(--sub);margin-top:8px}
+  canvas{max-height:360px}
+  ol.toc{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 14px 14px 38px;font-size:14px}
+  ol.toc a{color:var(--accent);text-decoration:none}
+  ul.cite{font-size:12px;color:var(--sub);padding-left:20px}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:680px){ .twocol{grid-template-columns:1fr} }
+  .flowbox{font-size:13px;line-height:1.6}
+  .flowbox b{color:var(--ink)}
+  .mech{background:#fafcff;border:1px dashed #bfdbfe;border-radius:8px;padding:12px 14px;margin:8px 0;font-size:13.5px}
+  footer{margin-top:48px;color:var(--sub);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
+  @media print{ h2{background:none;color:var(--ink);border-bottom:2px solid var(--ink);border-radius:0} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="rep">
+  <h1>綱島・購入判断レポート ＋ 金利／インフレと不動産価格の見通し（東京・神奈川）</h1>
+  <div class="meta">
+    本命エリア: 綱島（横浜市港北区）｜想定: 4,500万円前後・3〜5年保有して売却｜作成日: 2026年6月14日<br>
+    作成: 不動産市場アナリスト（Claude Code）｜手法: 3つの独立リサーチ（金利・市場全体・綱島）の結果を相互検証して統合。各数値に出典明記、未確認は「取得不可」と明示。
+  </div>
+</header>
+
+<div class="alert">
+  <strong>⚠ データ範囲の注記</strong>　本環境のネットワークポリシーで政府系API（不動産情報ライブラリ・e-Stat等）は遮断中のため、相場の確定値ではなく<b>Web公表情報（不動産経済研究所・東日本レインズの一次PDF、日銀統計、自治体公表、専門家解説、民間相場サイト）</b>に基づきます。民間相場サイトの数値は集計方法が各社で異なる参考値です。重要判断の前に一次データ（成約事例・登記・ハザードマップ原典）での裏取りを推奨します。
+</div>
+
+<ol class="toc">
+  <li><a href="#sec0">結論（エグゼクティブサマリー）</a></li>
+  <li><a href="#sec1">そもそも物件価格は何で動くのか — 金利・インフレ・建築費の構造</a></li>
+  <li><a href="#sec2">金利の現在地と今後3〜5年（日銀・住宅ローン）</a></li>
+  <li><a href="#sec3">東京・神奈川の今後3〜5年の見通し（二極化）</a></li>
+  <li><a href="#sec4">綱島の3〜5年：上昇要因 vs 下落要因の対決</a></li>
+  <li><a href="#sec5">綱島で買うなら — 投資判断への落とし込み</a></li>
+  <li><a href="#sec6">検証メモ（3エージェントの突き合わせ）／データソース／取得不可</a></li>
+</ol>
+
+<!-- ============ 0. 結論 ============ -->
+<h2 id="sec0">結論（エグゼクティブサマリー）</h2>
+
+<div class="verdict">
+<h4 style="margin-top:0">Q1. 綱島は今後3〜5年、上がるか下がるか？</h4>
+<p><b>判定: 「緩やかに上がる〜横ばい」がメインシナリオ。大きく下がる確率は相対的に低いが、過去3年（坪+12%）のような伸びはもう期待しにくい。</b></p>
+<p>綱島は<b>局地的な上昇材料（新綱島駅開業・東口再開発・港北区の人口増・足元の中古+6.9%）が、マクロの逆風（金利上昇・横浜市全体の人口減と価格頭打ち）を上回っている数少ないエリア</b>です。ただし上昇の「燃料」は2023年の新駅開業で相当使われ済みで、次の起爆剤である東口再開発タワー（約350戸）の竣工は2028年度。これは<b>あなたの売却時期（2029〜2031年）と重なり、新築供給増が既存中古の頭打ち要因にもなる「両刃の剣」</b>です。</p>
+</div>
+
+<div class="verdict warn">
+<h4 style="margin-top:0">Q2. そもそも不動産は金利・インフレでどう動くのか？ 東京・神奈川は上がるか下がるか？</h4>
+<p><b>判定: 「全面上昇」でも「全面下落」でもなく、<u>二極化（都心・駅近は底堅い／郊外・築古は調整）</u>が専門家の総意。あなたの懸念どおり金利上昇は需要を冷やす方向に効くが、建築費高騰・供給減・インフレが価格を下支えしており、両者が拮抗して「高止まり」しています。</b></p>
+<p>あなたの問い「金利が上がると物件が下がるのか、それとも物価で上がるのか」への答えは<b>「両方の力が同時に働いている」</b>です。金利上昇は<b>買い手の購買力を削る</b>（＝下げ要因／後述の試算で、変動0.9%→1.9%で借入可能額が約15%減）。一方インフレは<b>建築費・地価・賃料を押し上げ、原価が下がらないので売値も下がらない</b>（＝支え要因）。2024年3月のマイナス金利解除後も首都圏マンションが上がり続けたのは、後者が勝ってきたからです。今後は金利がさらに上がるため、<b>立地の弱い物件から先に前者（下げ）が勝ち始める</b>——これが二極化の正体です。</p>
+</div>
+
+<div class="card">
+<h4>あなたの戦略への含意（3行）</h4>
+<ul>
+  <li><b>綱島で買うこと自体は、二極化の「勝つ側」に賭ける合理的な選択。</b>新駅・再開発・人口増を持つ駅近は、まさに専門家が「底堅い」とする条件に合致します。</li>
+  <li>ただし<b>3〜5年で売る前提なら、期待リターンは控えめに見積もるべき</b>（過去ペースの外挿は危険）。損益分岐は値上がり+7.0%（短期譲渡税のため）で、これは「届きうるが楽勝ではない」水準です。</li>
+  <li><b>勝敗は物件選別で決まる</b>：駅近・浸水耐性（高層階・電気室位置）・管理良好・50㎡以上（出口の住宅ローン適格）。逆をやると同じ綱島でも「下がる側」に落ちます。</li>
+</ul>
+</div>
+
+<!-- ============ 1. メカニズム ============ -->
+<h2 id="sec1">① そもそも物件価格は何で動くのか — 金利・インフレ・建築費の構造</h2>
+
+<p>物件価格は「需要（買える人がどれだけいるか）」と「供給・原価（いくらで作れるか・どれだけ出てくるか）」のせめぎ合いで決まります。金利とインフレは、この両側に<b>逆向きに</b>効きます。</p>
+
+<div class="twocol">
+  <div class="mech">
+    <b>🔻 金利上昇 → 価格を下げる経路（需要側）</b><br>
+    金利が上がる → 住宅ローンの月返済が増える → <b>同じ月返済で借りられる額（＝買える物件価格）が減る</b> → 買い手の予算が下がり需要が縮む → 価格に下押し圧力。さらに返済がきつくなった人の売却が増えると中古在庫が膨らみ、もう一段の下押し。<br>
+    <span class="src">第一生命経済研の国際分析では、家賃が硬直的な16か国で<b>政策金利1%の上昇に対し名目住宅価格は平均▲0.5%、実質▲1.9%</b>下落。米国は2022年の利上げで価格急落。
+    出典: <a href="https://www.dlri.co.jp/report/macro/293625.html">第一生命経済研究所</a> / <a href="https://familia-hs.co.jp/column/2024/11/21/078/">ファミリアHS</a></span>
+  </div>
+  <div class="mech">
+    <b>🔺 インフレ → 価格を上げる経路（供給・原価側）</b><br>
+    物価が上がる → 建設資材・人件費・地価が上がる → <b>新築の原価が上がり、値下げできない</b> → 新築が高い → 中古もそれに引っ張られる。加えて不動産は実物資産なので<b>インフレ局面では「お金の価値が下がる分、モノの価値が上がる」インフレヘッジ</b>として買われ、賃料も物価に連動して上昇。<br>
+    <span class="src">建設工事費デフレーターは約10年で<b>約3割上昇</b>（2025年8月130.9、2015年度=100）。
+    出典: <a href="https://www.arc-navi.shikaku.co.jp/column/details.php?column_id=5028">総合資格navi</a> / <a href="https://moneiro.jp/media/article/inflation-property-impact">マネイロ</a></span>
+  </div>
+</div>
+
+<div class="card">
+<h4>「金利が上がっているのに首都圏マンションが上がり続けた」のはなぜか（あなたの疑問の核心）</h4>
+<p>2024年3月にマイナス金利が解除され、政策金利は0.75%（2025年12月）まで上がりましたが、首都圏マンション価格は上昇を続けました。理由は<b>上の🔺（押し上げ）が🔻（押し下げ）に勝ってきた</b >からです。具体的には:</p>
+<ul>
+  <li><b>建築費が下がらない</b>：原価高で、デベロッパーは値下げするより供給を絞る。</li>
+  <li><b>供給が記録的に少ない</b>：首都圏の新築発売戸数は2025年に<b>1973年以降で最少（約2.2万戸）</b>、着工は前年同期比▲22%。希少だから値が落ちない。<span class="src">出典: <a href="https://www.fudousankeizai.co.jp/share/mansion/654/ss2025.pdf">不動産経済研究所</a></span></li>
+  <li><b>変動金利がまだ低い</b>：2026年6月時点で変動は0.9%台。借りる側の負担増はまだ軽微。<span class="src">出典: <a href="https://finance.recruit.co.jp/article/rate-ranking/variable/">RECRUIT</a></span></li>
+  <li><b>パワーカップル（共働き高所得）のペアローン</b>が高額物件需要を支える。ペアローン申込は2025年に前年同期比2.1倍。<span class="src">出典: <a href="https://dime.jp/genre/2035517/">@DIME</a></span></li>
+</ul>
+<p class="note" style="margin-bottom:0"><b>要点：</b>「物価が上がるから不動産が上がる」も「金利が上がるから不動産が下がる」も<b>どちらも正しく、同時に起きています</b>。今は押し上げ側がやや優勢の「高止まり」。ただし金利がさらに上がり、変動金利の負担増が顕在化してくると、<b>力関係が均衡→逆転していく</b>のが今後3〜5年のテーマです。</p>
+</div>
+
+<div class="card">
+<h4>金利の波及経路（変動と固定で連動先が違う）</h4>
+<table>
+  <tr><th>ローン種別</th><th>連動する金利</th><th>誰が動かすか</th><th>2026年6月の水準</th></tr>
+  <tr><td><b>変動金利</b></td><td>短期プライムレート</td><td>日銀の政策金利（＝今の景気）</td><td>主要ネット銀行で約0.9%台<br><span class="src">2024年1月は約0.6%</span></td></tr>
+  <tr><td><b>固定金利（フラット35等）</b></td><td>10年物国債利回り（長期金利）</td><td>市場の将来予想（＝将来の物価・金利観）</td><td>フラット35最低3.21%<br><span class="src">2026年4月2.39%→6月3.21%。現行制度で初の3%超</span></td></tr>
+</table>
+<p class="src">出典: <a href="https://www.shiruporuto.jp/public/document/container/hyakka/part2/jutaku_loan/jutaku_loan005.html">知るぽると</a> / <a href="https://finance.recruit.co.jp/article/rate-ranking/variable/">RECRUIT</a> / <a href="https://www.nikkei.com/article/DGXZQOUA012N40R00C26A6000000/">日経（フラット35）</a>。固定は長期金利の急騰（10年国債が2026年5月に一時2.8%＝約29年半ぶり高水準）で先に大きく上がっており、固定派の予算は変動派より早く削られている。</p>
+</div>
+
+<!-- ============ 2. 金利見通し ============ -->
+<h2 id="sec2">② 金利の現在地と今後3〜5年（日銀・住宅ローン）</h2>
+
+<div class="chartbox">
+  <canvas id="chartRate"></canvas>
+  <div class="cap">日銀の政策金利（無担保コール翌日物 誘導目標）の推移と見通し。2026年6月会合（6/15-16）での1.0%は<b>本レポート時点で未開催・未確定</b>の市場観測（織り込み約77%）。ターミナル（到達点）はエコノミストで1.25〜2.0%と幅。出典は本文⑥。</div>
+</div>
+
+<div class="card">
+<ul>
+  <li><b>これまで</b>：2024年3月マイナス金利解除（17年ぶり利上げ）→ 2024年8月0.25% → 2025年1月0.5% → <b>2025年12月0.75%（約30年ぶり高水準）</b>。概ね半年ごと0.25%刻み。</li>
+  <li><b>足元</b>：2026年6月会合（6/15-16）で<b>1.0%への利上げが有力視</b>（市場が約77%織り込み／本レポート作成時点で会合前のため未確定）。</li>
+  <li><b>到達点（ターミナルレート）の予想に幅</b>：NRI木内氏1.25%、野村1.5%、市場・BofA1.75〜2.0%。ESP調査では「2027年末で1.5〜1.6%」が最多。</li>
+  <li><b>含意</b>：今後3〜5年で政策金利は<b>1.0〜1.5%程度まで</b>上がるのがメインシナリオ。変動金利も連れて上がり、購買力をじわじわ削る（次の試算）。</li>
+</ul>
+<p class="src">出典: <a href="https://www.bloomberg.com/jp/news/articles/2024-03-19/S7NFSZDWRGG000">Bloomberg(解除)</a> / <a href="https://www.nikkei.com/article/DGXZQOUB166040W5A211C2000000/">日経(0.75%)</a> / <a href="https://www.nomura.co.jp/wealthstyle/article/0571/">野村(1.5%予想)</a> / <a href="https://www.nri.com/jp/media/column/kiuchi/20260108.html">NRI木内(1.25%予想)</a> / <a href="https://j-money.jp/article/199996/">J-MONEY(ESP調査)</a></p>
+</div>
+
+<div class="chartbox">
+  <canvas id="chartBorrow"></canvas>
+  <div class="cap"><b>金利が上がると「買える額」がどれだけ減るか</b>（月返済13万円・35年・元利均等で一定とした場合の借入可能額）。同じ月予算13万円の買い手が、変動0.5%なら約5,008万円借りられるが、1.5%では約4,246万円（▲15%）、固定3.0%では約3,378万円（▲33%）しか借りられない。<b>これが「金利上昇→買える人が減る／予算が下がる→需要減」の正体</b>です。試算は本レポートによる計算（前提を変えれば変動します）。</div>
+</div>
+
+<div class="note">
+<b>あなたの仮説の検証：</b>「金利が上がると住宅ローン（返済額）が増え、買う人が減る」——<b>正しいです</b>。上のグラフのとおり、金利が1%上がると買い手の予算は1〜2割縮みます。ただし「だから物件価格が即下がる」とは限らないのが難しい点で、売る側（デベロッパー）は原価高で値下げできず<b>当面は「供給を絞って価格維持」で対応</b>するため、価格よりも先に<b>取引量の減少・売れ残り期間の長期化</b>という形で表れやすい。価格下落が顕在化するのは、金利がもう一段上がるか、売り急ぐ人が増えたときです。</p>
+</div>
+
+<!-- ============ 3. 東京・神奈川見通し ============ -->
+<h2 id="sec3">③ 東京・神奈川の今後3〜5年の見通し（二極化）</h2>
+
+<div class="card">
+<h4>現状（2025〜2026年の実績）</h4>
+<div class="tablebox">
+<table>
+  <tr><th>指標</th><th>水準</th><th>前年比</th><th>出典</th></tr>
+  <tr><td>首都圏 新築マンション平均（2025年）</td><td class="num">9,182万円</td><td class="num up">+17.2%</td><td class="src"><a href="https://www.nli-research.co.jp/report/detail/id=84164?site=nli">ニッセイ基礎研</a></td></tr>
+  <tr><td>東京23区 新築平均（2025年）</td><td class="num">1億3,613万円</td><td class="num up">+21.8%</td><td class="src"><a href="https://www.nippon.com/ja/japan-data/h02685/">nippon.com</a></td></tr>
+  <tr><td>首都圏 中古成約㎡単価（2025年）</td><td class="num">82.98万円/㎡</td><td class="num up">+7.9%（13年連続上昇）</td><td class="src"><a href="https://ir-i.jp/expert/?p=5430">レインズ集計</a></td></tr>
+  <tr><td>東京都区部 中古成約㎡単価</td><td class="num">135.6万円/㎡</td><td class="num up">+15.1%</td><td class="src"><a href="https://www.ieshil.com/columns/1085/">イエシル(レインズ)</a></td></tr>
+  <tr><td><b>横浜市 中古（70㎡換算・2024年）</b></td><td class="num">474.7万円</td><td class="num down">▲1.1%</td><td class="src"><a href="https://yokohama-style.jp/sell/blog/yokohama_2025market/">横浜スタイル</a></td></tr>
+  <tr><td>新築供給戸数（首都圏・2025年）</td><td class="num">約21,962戸</td><td class="num down">▲4.5%（1973年以降最少）</td><td class="src"><a href="https://www.fudousankeizai.co.jp/share/mansion/654/ss2025.pdf">不動産経済研究所</a></td></tr>
+</table>
+</div>
+<p class="note"><b>ここが重要：</b>東京23区は二桁で上がり続けている一方、<b>横浜市の中古は2024年に前年比▲1.1%とすでにマイナス圏</b>。「神奈川県全体がマイナスに転じる中、横浜市はかろうじてプラス維持」「県内でも横浜西区+6.6%など利便地は堅調」という記述もあり、<b>神奈川は“面”では調整が始まりつつ、“点”（駅近・利便地）では上昇継続という二極化の最前線</b>です。綱島はこの「点」の側に入れるかどうかが勝負。</p>
+</div>
+
+<div class="chartbox">
+  <canvas id="chartCompare"></canvas>
+  <div class="cap">直近の価格・単価の前年比（％）。集計期間・対象が異なる点に注意（新築/中古、通年/月次、駅/区/市）。横浜市“全体”はマイナス圏だが、綱島“駅”はプラスを維持しているコントラストが要点。出典は各行に同じ。</div>
+</div>
+
+<div class="twocol">
+  <div class="card">
+    <h4 class="up">上昇シナリオの根拠</h4>
+    <ul>
+      <li>新築供給が4年連続減・過去最少、用地不足・建築費高騰が構造的</li>
+      <li>高価格帯への供給シフトで平均が下がりにくい</li>
+      <li>パワーカップル・相続マネー・円安下の海外資金が需要を下支え</li>
+      <li>中古㎡単価は71カ月連続上昇とモメンタムが強い</li>
+    </ul>
+    <span class="src">出典: <a href="https://www.nli-research.co.jp/report/detail/id=84164?site=nli">ニッセイ基礎研</a> / <a href="https://www.ieshil.com/columns/1250/">イエシル</a> / <a href="https://www.kenbiya.com/ar/ns/jiji/purchase_know_how/9722.html">健美家(JLL)</a></span>
+  </div>
+  <div class="card">
+    <h4 class="down">下落シナリオの根拠</h4>
+    <ul>
+      <li>日銀利上げ（0.75%→1.0〜1.5%観測）で変動金利上昇、購買力低下</li>
+      <li>年収倍率が限界水準、実需が価格についていけない</li>
+      <li>世帯数が2025年頃ピークアウト、長期で需要減</li>
+      <li>横浜市は2024年▲1.1%、郊外から調整入りの兆候。中古在庫増で売買の価格ギャップ拡大</li>
+    </ul>
+    <span class="src">出典: <a href="https://www.sbishinseibank.co.jp/retail/housing/column/vol152.html">SBI新生銀行</a> / <a href="https://www.reds.co.jp/p125339/">REDS</a> / <a href="https://www.homes.co.jp/satei/media/entry/column001">LIFULL HOME'S</a> / <a href="https://yokohama-style.jp/sell/blog/yokohama_2025market/">横浜スタイル</a></span>
+  </div>
+</div>
+
+<div class="verdict warn">
+<b>専門家の総意（複数メディア集約）：</b>「全物件一律の下落」は少数派で、<b>二極化・三極化が大勢の見方</b>。<b>都心・駅近・築浅・管理良好</b>は底堅く上昇継続、<b>郊外・駅遠・築古・修繕不安</b>は価格調整を受けやすい。東京都心は供給制約で当面強含み（「東京独歩高」）、神奈川は横浜中心部以外で先行調整の兆し。大暴落予測は少数だが、金利・世界金融ショックを警戒する論者も存在し見解は割れる。
+<span class="src">出典: <a href="https://suumo.jp/article/oyakudachi/oyaku/ms_shinchiku/ms_money/kakakuyosoku/">SUUMO</a> / <a href="https://www.homes.co.jp/satei/media/entry/column001">LIFULL HOME'S</a> / <a href="https://nakajitsu.com/column/75165p/">ナカジツ</a></span>
+</div>
+
+<!-- ============ 4. 綱島 対決 ============ -->
+<h2 id="sec4">④ 綱島の3〜5年：上昇要因 vs 下落要因の対決</h2>
+
+<div class="tablebox">
+<table>
+  <tr><th style="width:50%">🔺 上がる要因（プラス材料）</th><th style="width:50%">🔻 下がる・伸び悩む要因（マイナス材料）</th></tr>
+  <tr>
+    <td><b>東口再開発（27階・約350戸・駅前広場、2028年度竣工予定）</b>。解体→2025年度建築着手→2028年度完了。駅前広場・歩行者空間整備で拠点性向上。施工は三井不動産レジ＋鹿島。</td>
+    <td><b>その再開発タワー＋既出のドレッセタワー新綱島（252戸）の新築大量供給</b>が、保有中の築古中古を相対的に見劣りさせ価格を頭打ちにする「玉突き」リスク。竣工2028年はあなたの売却期と重なる。</td>
+  </tr>
+  <tr>
+    <td><b>新綱島駅（東急新横浜線・2023年開業）の実績効果</b>。渋谷約27分。新綱島の乗降人員は2024年度1万6,473人（前年比+41.3%）。賃貸需要も新駅周辺で強い。</td>
+    <td><b>上昇の「燃料」は新駅開業で相当使用済み</b>。最大の価格インパクト（新線開業）は2023年に出尽くしており、ここからの伸びしろは逓減。</td>
+  </tr>
+  <tr>
+    <td><b>港北区の人口増</b>。2026年4月約36.9万人、2030年37.4万・2040年38.1万人と四半世紀先まで増の推計。横浜市内で数少ない増加エリア。</td>
+    <td><b>横浜市全体は2025年に78年ぶり人口減</b>、生産年齢人口も2025年ピークに減少見込み。市の“面”の地盤沈下が、港北区の“点”の強さをいつまで支えるか。</td>
+  </tr>
+  <tr>
+    <td><b>地価・相場の上昇継続</b>。綱島エリア地価2025年+6.25%（綱島東+6.56%）。中古売却相場は2025年10月で前年比+6.92%。港北区の中古(70㎡)は直近1年+2.63%と加速。</td>
+    <td><b>月次では一服感</b>（綱島 前月比▲2.13%）。県全体は調整局面入りで、綱島も無縁ではいられない。<b>金利上昇</b>が買い手の予算を削る（③の試算）。</td>
+  </tr>
+  <tr>
+    <td><b>綱島SST（パナソニック跡地のスマートシティ）</b>、Apple開発拠点・大学寮・商業施設「アピタテラス」等が集積し、街の付加価値を底上げ。</td>
+    <td><b>最大の固有リスク＝鶴見川の水害</b>。綱島東・西は浸水想定／家屋倒壊等氾濫想定区域を含み、高潮想定も拡大。専門家いわく「<b>実被害・区域の後発拡大</b>」は価格を大きく下げる。</td>
+  </tr>
+  <tr>
+    <td>新築タワー「ドレッセタワー新綱島」のリセール参考値は新築時坪約340万→中央値約537万/坪へ上昇（※単一サイト査定値、実勢確定ではない）。</td>
+    <td><b>中古ストックの老朽化</b>：綱島駅の中古の約59%が築21年以上。<b>街の弱点</b>（駅前混雑・道の狭さ・綱島街道の渋滞・坂）も指摘される。</td>
+  </tr>
+</table>
+</div>
+<p class="src">出典（上昇）: <a href="https://hiyosi.net/2022/07/11/tsunashima_higashi2022-2/">横浜日吉新聞(東口)</a> / <a href="https://www.kanaloco.jp/news/economy/article-1021024.html">カナロコ(乗降)</a> / <a href="https://hiyosi.net/2026/04/10/population_growth2026/">同(人口)</a> / <a href="https://hiyosi.net/2025/09/19/land_price2025-3/">同(地価)</a> / <a href="https://www.mansion-review.jp/baikyaku/station/2600114/souba.html">マンションレビュー(相場)</a> / <a href="https://tsunashimasst.com/JP/">綱島SST</a>　｜　出典（下落）: <a href="https://hiyosi.net/2024/02/19/bousai2024/">横浜日吉新聞(防災)</a> / <a href="https://www.h-l-c.net/column/804/">HLC(浸水と価格)</a> / <a href="https://note.com/minamisouken01/n/n8de823f3564c">横浜人口減</a> / <a href="https://issin-estate.co.jp/column-tower-apartment-prices-plummet/">タワマン供給と下落</a> / <a href="https://www.mansion-review.jp/mansion/station/2600114.html">築年構成</a> / <a href="https://toyokeizai.net/articles/-/402504">東洋経済(街の課題)</a></p>
+
+<div class="verdict">
+<h4 style="margin-top:0">綱島の総合判定</h4>
+<p><b>プラス材料がマイナス材料を上回っており、3〜5年で「緩やかに上がる〜横ばい」の可能性が、「下がる」可能性より高いと評価します。</b>根拠は、綱島が二極化の「勝つ側（駅近・利便・人口増・再開発）」の条件を満たしていること、そして足元の相場が県全体の調整局面でも前年比プラス（+6.9%）を維持していること。</p>
+<p>ただし<b>確信度は中程度</b>です。①上昇の主因だった新駅効果が一巡、②次の再開発竣工（2028年）は供給増として逆風にもなる、③水害という固有のテールリスク、④金利という全体の逆風——これらが「大化け」の目を抑えます。<b>「数％〜十数％の緩やかな値上がりを狙い、損益分岐+7%を少し超える程度」を現実的な期待値</b>と置くのが妥当です。</p>
+</div>
+
+<!-- ============ 5. 投資判断 ============ -->
+<h2 id="sec5">⑤ 綱島で買うなら — 投資判断への落とし込み</h2>
+
+<div class="card">
+<h4>「勝つ側」に入るためのチェックリスト</h4>
+<ul>
+  <li><b>☐ 浸水耐性</b>：物件単位でハザードマップの想定浸水深を確認。低地・1〜2階より<b>高層階</b>、電気室・受変電設備が浸水しない階にあるか。綱島東の川近接・低地は避ける。<span class="badge r">最重要</span></li>
+  <li><b>☐ 駅近（徒歩7分以内目安）</b>＋管理状態良好（修繕積立金が適正、長期修繕計画あり）。二極化で生き残るのは「駅近・管理良好」。</li>
+  <li><b>☐ 50㎡以上</b>（登記簿面積）：3〜5年後に売るとき、買い手が住宅ローン控除を使え、銀行融資も付きやすい。<b>40㎡未満は出口の買い手が激減</b>（前回お伝えした論点）。予算4,500万では駅近だと1LDK中心になるが、コンパクトでも50㎡を死守。</li>
+  <li><b>☐ 売却タイミングの設計</b>：2028年度の東口タワー竣工で新築供給が増える前後の需給に注意。<b>竣工前（〜2027年）に売り抜けるか、竣工で街評価が上がりきった後（2029〜）</b>かを意識。</li>
+  <li><b>☐ 金利シナリオの耐性</b>：自分が変動で借りるなら、政策金利1.5%（変動1.7%前後）まで上がっても返済が回るかを事前にストレステスト。</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>損益分岐の再掲（前回レポートより）</h4>
+<p>購入4,500万円・往復取引コスト7%・<b>3〜5年保有＝短期譲渡税39.63%</b>（譲渡年1/1時点で所有5年超になるのは実質6年目以降のため、3〜5年売却はほぼ短期）。</p>
+<ul>
+  <li><b>損益分岐＝値上がり+7.0%（売却4,815万円）。</b>3年保有なら年+2.28%、5年なら年+1.36%の値上がりで到達。</li>
+  <li>綱島の足元は前年比+6.9%。<b>このペースが鈍化しても年2%前後を維持できれば損益分岐は射程内</b>。ただし金利上昇・再開発供給で鈍化する前提を置くなら、楽観は禁物。</li>
+  <li>手取りで300万円の利益を狙うなら<b>+18%（短期）</b>必要——3〜5年では相当強気。<b>本命は「大きく勝つ」より「負けない（損益分岐＋α）」設計</b>が現実的。</li>
+</ul>
+<p class="src">減価償却・保有コスト（管理費・修繕積立金・固定資産税・ローン金利）は未算入。実際の手取りはこれらの分だけ悪化します。自宅居住なら3,000万円特別控除で課税はほぼ消えるため、「投資」か「住んで売る」かで税の前提が大きく変わります。</p>
+</div>
+
+<!-- ============ 6. 検証・出典 ============ -->
+<h2 id="sec6">⑥ 検証メモ・データソース・取得不可</h2>
+
+<div class="card">
+<h4>3つの独立リサーチの突き合わせ（相互検証）</h4>
+<p>本レポートは「金利・インフレ」「東京神奈川の市場全体」「綱島固有」を別々のエージェントで調査し、重複する数値を突き合わせました。<b>主要数値に矛盾はなく、整合的</b>でした。</p>
+<ul>
+  <li><b>政策金利</b>：3調査とも「2025年12月に0.75%・約30年ぶり高水準」で一致。✔整合</li>
+  <li><b>二極化の検証</b>：市場調査の「横浜市中古2024年▲1.1%」と綱島調査の「綱島中古2025年10月+6.92%／港北区直近1年+2.63%」は<b>一見矛盾するが、実は両立</b>——市全体は頭打ち、駅近・港北区は局地上昇という二極化の実態を、別ソースが別角度から裏付け。✔整合（むしろ補強）</li>
+  <li><b>金利メカニズム</b>：「金利↑で需要減（下げ）」と「建築費・供給減・インフレで価格維持（支え）」が拮抗、という構図で金利調査と市場調査が一致。✔整合</li>
+  <li><b>留意（数値の幅）</b>：綱島の価格上昇率は出典で幅がある（坪単価3年+12%[スムナラ]／港北区3年+2.85%[LIFULL]）。<b>対象が「駅」か「区」か、指標が「坪単価」か「標準物件」かで異なる</b>ため、本文では併記し単一の値に丸めていません。</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>主要データソース（取得日2026-06-13〜14、WebSearch経由）</h4>
+<div class="twocol">
+  <ul class="cite">
+    <li><b>金利・マクロ</b></li>
+    <li>日本銀行 長短プライム/政策金利 — <a href="https://www.boj.or.jp/statistics/dl/loan/prime/prime.htm">boj.or.jp</a></li>
+    <li>不動産経済研究所（新築・供給） — <a href="https://www.fudousankeizai.co.jp/share/mansion/654/ss2025.pdf">fudousankeizai.co.jp</a></li>
+    <li>東日本レインズ（中古成約） — <a href="http://www.reins.or.jp/pdf/trend/mw/mw_202511_summary.pdf">reins.or.jp</a></li>
+    <li>ニッセイ基礎研究所 — <a href="https://www.nli-research.co.jp/report/detail/id=84164?site=nli">nli-research.co.jp</a></li>
+    <li>第一生命経済研究所（金利と価格の実証） — <a href="https://www.dlri.co.jp/report/macro/293625.html">dlri.co.jp</a></li>
+    <li>日経（フラット35・利上げ報道） — <a href="https://www.nikkei.com/article/DGXZQOUA012N40R00C26A6000000/">nikkei.com</a></li>
+    <li>野村/NRI/J-MONEY（金利見通し） — <a href="https://www.nomura.co.jp/wealthstyle/article/0571/">nomura</a> / <a href="https://www.nri.com/jp/media/column/kiuchi/20260108.html">NRI</a> / <a href="https://j-money.jp/article/199996/">J-MONEY</a></li>
+  </ul>
+  <ul class="cite">
+    <li><b>綱島・神奈川</b></li>
+    <li>横浜市（東口再開発・新綱島） — <a href="https://www.city.yokohama.lg.jp/kurashi/machizukuri-kankyo/toshiseibi/jokyo/kukakuseiri/tsunashima/tunahigasiguchi.html">city.yokohama.lg.jp</a></li>
+    <li>横浜日吉新聞（人口・地価・防災・乗降） — <a href="https://hiyosi.net/">hiyosi.net</a></li>
+    <li>カナロコ（乗降人員） — <a href="https://www.kanaloco.jp/news/economy/article-1021024.html">kanaloco.jp</a></li>
+    <li>マンションレビュー（綱島相場・築年） — <a href="https://www.mansion-review.jp/baikyaku/station/2600114/souba.html">mansion-review.jp</a></li>
+    <li>横浜スタイル（横浜市2024▲1.1%） — <a href="https://yokohama-style.jp/sell/blog/yokohama_2025market/">yokohama-style.jp</a></li>
+    <li>国交省京浜河川事務所（鶴見川浸水想定） — <a href="https://www.ktr.mlit.go.jp/keihin/keihin00688.html">ktr.mlit.go.jp</a></li>
+    <li>綱島SST — <a href="https://tsunashimasst.com/JP/">tsunashimasst.com</a></li>
+    <li>市場予測（SUUMO/HOME'S/REDS/健美家ほか） — 本文中に個別リンク</li>
+  </ul>
+</div>
+</div>
+
+<div class="card">
+<h4 class="na">取得不可・未確定（推測で埋めていません）</h4>
+<ul>
+  <li><b>2026年6月会合（6/15-16）の利上げ結果</b>：本レポート作成時点で会合前。1.0%は市場観測であり<b>未確定</b>。</li>
+  <li><b>綱島駅周辺のピンポイント想定浸水深</b>（0.5〜3m等の具体数値）：自治体ハザードマップ原典での個別確認が必要。</li>
+  <li><b>神奈川県全体の2025年通年・中古成約㎡単価の確定値</b>：レインズ月例原本の参照が必要（横浜市2024年▲1.1%は確認済み）。</li>
+  <li><b>綱島の新築供給過剰の定量データ・中古への実証的影響</b>：一般論ベース。エリア固有の統計は取得不可。</li>
+  <li>市場・BofAのターミナルレート予想の一次出典URL（二次報道経由）。</li>
+  <li><b>API直結データ</b>（不動産情報ライブラリの四半期成約時系列・e-Statの年齢別転入超過・国土数値情報のGIS判定）はネットワーク遮断＋キー未設定のため未取得。完全版にはAPIキー申請と環境のドメイン許可が必要（前回レポート⑥のTODO参照）。</li>
+</ul>
+</div>
+
+<footer>
+  本レポートは公開情報の整理であり、投資勧誘・助言ではありません。将来の価格・金利は不確実で、本文の見通しはシナリオの提示にすぎません。最終判断の前に必ず一次データ（成約事例・登記・ハザードマップ原典・最新の金融政策決定）をご確認ください。<br>
+  作成: 2026-06-14 ｜ グラフ: Chart.js v4（CDN／表示にネット接続が必要）｜ 関連: <a href="kanagawa-area-report.html">神奈川5駅エリア投資分析レポート</a>
+</footer>
+
+</div>
+
+<script>
+// --- 政策金利の推移と見通し ---
+new Chart(document.getElementById('chartRate'), {
+  type:'line',
+  data:{ labels:['2024/3','2024/8','2025/1','2025/12','2026/6\n(観測)','ターミナル\n見通し'],
+    datasets:[
+      { label:'政策金利（決定済み）', data:[0.05,0.25,0.5,0.75,null,null],
+        borderColor:'#2563eb', backgroundColor:'#2563eb', tension:0.1, spanGaps:false, pointRadius:4 },
+      { label:'観測・見通し（未確定）', data:[null,null,null,0.75,1.0,1.5],
+        borderColor:'#b45309', borderDash:[6,4], backgroundColor:'#b45309', tension:0.1, pointRadius:4 }
+    ]},
+  options:{ scales:{ y:{ title:{display:true,text:'%'}, min:0, max:2 } },
+    plugins:{ title:{display:true,text:'日銀 政策金利の推移と今後の見通し'} } }
+});
+
+// --- 金利別 借入可能額（月返済13万円・35年・元利均等） ---
+function loanCapacity(annualPct){
+  const i = annualPct/100/12, n=420, M=130000;
+  const loan = M * (1 - Math.pow(1+i, -n)) / i;
+  return Math.round(loan/10000); // 万円
+}
+const rateLabels = ['0.5%','1.0%','1.5%','2.0%','2.5%','3.0%'];
+const capData = [0.5,1.0,1.5,2.0,2.5,3.0].map(loanCapacity);
+new Chart(document.getElementById('chartBorrow'), {
+  type:'bar',
+  data:{ labels:rateLabels,
+    datasets:[{ label:'借入可能額（万円）｜月返済13万円・35年', data:capData,
+      backgroundColor:['#1d4ed8','#2563eb','#3b82f6','#f59e0b','#ea580c','#b91c1c'] }]},
+  options:{ scales:{ y:{ title:{display:true,text:'借入可能額（万円）'}, min:0 } },
+    plugins:{ legend:{display:false},
+      title:{display:true,text:'金利が1%上がるごとに「買える額」はこれだけ減る'},
+      tooltip:{callbacks:{label:c=>c.parsed.y.toLocaleString()+'万円'}} } }
+});
+
+// --- 直近の前年比比較 ---
+new Chart(document.getElementById('chartCompare'), {
+  type:'bar',
+  data:{ labels:['東京23区\n新築','東京都区部\n中古㎡','首都圏\n中古㎡','綱島\n中古','港北区\n中古3年','横浜市\n中古(2024)'],
+    datasets:[{ label:'前年比など（％）',
+      data:[21.8,15.1,7.9,6.92,2.85,-1.1],
+      backgroundColor:[21.8,15.1,7.9,6.92,2.85,-1.1].map(v=> v>=0 ? '#2563eb' : '#b91c1c') }]},
+  options:{ scales:{ y:{ title:{display:true,text:'%'} } },
+    plugins:{ legend:{display:false},
+      title:{display:true,text:'価格・単価の前年比（期間・対象は異なる／二極化の可視化）'} } }
+});
+</script>
+</body>
+</html>
